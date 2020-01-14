@@ -1046,7 +1046,9 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
   		return;
 	}
 	// backtracking line search
-	double gp = 0.5 * grad.transpose() * p;
+	// double gp = 0.5 * grad.transpose() * p;
+	double gp = 1e-4 * grad.transpose() * p;
+
 	double step_size = 1.0;
 	x_next = x + step_size * p;
 	energy_next = formulation.getLiftedEnergy(x_next);
@@ -1086,7 +1088,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		}
 
 		// backtracking line search
-		double gp = 0.5 * grad.transpose() * p;
+		// double gp = 0.5 * grad.transpose() * p;
+		double gp = 1e-4 * grad.transpose() * p;
 		double step_size = 1.0;
 		x_next = x + step_size * p;
 		energy_next = formulation.getLiftedEnergy(x_next);
