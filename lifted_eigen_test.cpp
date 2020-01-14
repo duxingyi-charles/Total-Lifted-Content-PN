@@ -813,6 +813,7 @@ public:
 
 		// compute energy, gradient and Hessian
 		energy = 0.0;
+		std::vector<double> energyList(F.cols());
 		MatrixXd fullGrad = MatrixXd::Zero(V.rows(),V.cols());
 
 		std::vector<eigenT> tripletList(3*3*vDim*vDim*F.cols());
@@ -839,10 +840,7 @@ public:
 			MatrixXd g;
 			MatrixXd hess;
 			liftedTriAreaGradHessian(vert,r,f,g,hess);
-			#pragma omp critical
-			{
-				energy += f;
-			}
+			energyList[i] = f;
 
 			#pragma omp critical
 			{
@@ -886,6 +884,12 @@ public:
 			}
 			
 
+		}
+
+		// get total energy
+		for (std::vector<double>::iterator i = energyList.begin(); i != energyList.end(); ++i)
+		{
+			energy += *i;
 		}
 
 		// get free gradient
