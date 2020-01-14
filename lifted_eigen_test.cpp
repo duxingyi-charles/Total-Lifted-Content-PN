@@ -54,7 +54,7 @@ bool importData(const char* filename,
     in_file >> n >> ndim;
     initV.resize(n);
     for (int i = 0; i < n; ++i)
-    {	
+    {
     	std::vector<double> v(ndim);
     	for (int j = 0; j < ndim; ++j)
     	{
@@ -68,7 +68,7 @@ bool importData(const char* filename,
     in_file >> n >> simplexSize;
     F.resize(n);
     for (int i = 0; i < n; ++i)
-    {	
+    {
     	std::vector<unsigned> v(simplexSize);
     	for (int j = 0; j < simplexSize; ++j)
     	{
@@ -81,7 +81,7 @@ bool importData(const char* filename,
     in_file >> n;
     handles.resize(n);
     for (int i = 0; i < n; ++i)
-    {		
+    {
     	unsigned v;
     	in_file >> v;
     	handles[i] = v;
@@ -103,15 +103,15 @@ class SolverOptionManager
 {
 public:
 	//default options
-	SolverOptionManager(): 
+	SolverOptionManager():
 	ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8),
-	maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"), 
+	maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 	/*record()*/ record_vert(false), record_energy(false), record_minArea(false)
 	{};
 	//import options from file
-	SolverOptionManager(const char* filename): 
+	SolverOptionManager(const char* filename):
 	ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8),
-	maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"), 
+	maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 	/*record()*/ record_vert(false), record_energy(false), record_minArea(false)
 	{
 		if (!importOptions(filename))
@@ -160,7 +160,7 @@ public:
 		if (record_energy)  std::cout << "energy ";
 		if (record_minArea) std::cout << "minArea ";
 		std::cout << "}" << std::endl;
-		
+
 
 	}
 
@@ -169,7 +169,7 @@ public:
 		//open the data file
 		std::ifstream in_file(filename);
 
-		if (! in_file.is_open()) 
+		if (! in_file.is_open())
 		{
 			std::cerr << "Failed to open " << filename << "!" << std::endl;
 			return false;
@@ -277,7 +277,7 @@ public:
 
 		return true;
 	}
-	
+
 };
 
 
@@ -623,7 +623,7 @@ public:
 	MatrixXd restD;   // squared edge lengths of rest/auxiliary mesh
 
 	VectorXi indexDict; // map: V index --> freeV index. If V(i) is not free, indexDict(i) = -1.
-	MatrixXi F_free;    // freeV indices of triangles. 
+	MatrixXi F_free;    // freeV indices of triangles.
 
 	VectorXd x0;  // initial variable vector
 	MatrixXd V;   // current V of target mesh
@@ -640,7 +640,7 @@ public:
 			}
 		}
 	}
-	
+
 
 	double getLiftedEnergy(const VectorXd& x)
 	{
@@ -762,7 +762,7 @@ public:
 			fullGrad.col(i2) += g.col(1);
 			fullGrad.col(i3) += g.col(2);
 
-			
+
 			Vector3i indices = F_free.col(i);
 			for (int j = 0; j < 3; ++j)
 			{
@@ -775,7 +775,7 @@ public:
 						for (int l = 0; l < vDim; ++l)
 						{
 							tripletList.push_back(eigenT(idx_j*vDim+l,idx_k*vDim+l,lap_jk));
-						}	
+						}
 					}
 				}
 			}
@@ -820,8 +820,11 @@ public:
 		Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(3*vDim);
 		//
 
+		#pragma omp parallel
+		#pragma omp for
 		for (int i = 0; i < F.cols(); ++i)
 		{
+			// cout << "face " << i << ": " << std::endl;
 			int i1,i2,i3;
 			i1 = F(0,i);
 			i2 = F(1,i);
@@ -837,11 +840,17 @@ public:
 			MatrixXd g;
 			MatrixXd hess;
 			liftedTriAreaGradHessian(vert,r,f,g,hess);
-			energy += f;
+			#pragma omp critical
+			{
+				energy += f;
+			}
 
-			fullGrad.col(i1) += g.col(0);
-			fullGrad.col(i2) += g.col(1);
-			fullGrad.col(i3) += g.col(2);
+			#pragma omp critical
+			{
+				fullGrad.col(i1) += g.col(0);
+				fullGrad.col(i2) += g.col(1);
+				fullGrad.col(i3) += g.col(2);
+			}
 
 			//project hess to PSD
 			eigenSolver.compute(hess);
@@ -856,20 +865,23 @@ public:
 			hess = eigenVecs * (eigenVals.asDiagonal()) * eigenVecs.transpose();
 			//end project hess to PSD
 
-			
-			Vector3i indices = F_free.col(i);
-			for (int j = 0; j < 3; ++j)
+
+			#pragma omp critical
 			{
-				int idx_j = indices(j);
-				for (int k = 0; k < 3; ++k)
+				Vector3i indices = F_free.col(i);
+				for (int j = 0; j < 3; ++j)
 				{
-					int idx_k = indices(k);
-					if (idx_j!=-1 && idx_k!=-1) {
-						for (int l = 0; l < vDim; ++l)
-						{
-							for (int n = 0; n < vDim; ++n)
+					int idx_j = indices(j);
+					for (int k = 0; k < 3; ++k)
+					{
+						int idx_k = indices(k);
+						if (idx_j!=-1 && idx_k!=-1) {
+							for (int l = 0; l < vDim; ++l)
 							{
-								tripletList.push_back(eigenT(idx_j*vDim+l,idx_k*vDim+n,hess(j*vDim+l,k*vDim+n)));
+								for (int n = 0; n < vDim; ++n)
+								{
+									tripletList.push_back(eigenT(idx_j*vDim+l,idx_k*vDim+n,hess(j*vDim+l,k*vDim+n)));
+								}
 							}
 						}
 					}
@@ -899,7 +911,7 @@ public:
 		Hess.setFromTriplets(tripletList.begin(), tripletList.end());
 
 	}
-	
+
 };
 
 
@@ -911,12 +923,12 @@ public:
 
 // 	VectorXd x0;
 
-	
+
 
 // };
 
 
-void Laplacian_precondition_gradient_descent(LiftedFormulation& formulation, VectorXd& x, int maxIter) 
+void Laplacian_precondition_gradient_descent(LiftedFormulation& formulation, VectorXd& x, int maxIter)
 {
 	double energy;
 	VectorXd grad(x.size());
@@ -942,7 +954,7 @@ void Laplacian_precondition_gradient_descent(LiftedFormulation& formulation, Vec
 
 
 	for (int i = 1; i < maxIter; ++i)
-	{	
+	{
 		formulation.getLiftedEnergyGradLaplacian(x,energy,grad,mat);
 
 		solver.factorize(mat);
@@ -961,7 +973,7 @@ void Laplacian_precondition_gradient_descent(LiftedFormulation& formulation, Vec
 }
 
 
-void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionManager& options, double shrink = 0.7) 
+void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionManager& options, double shrink = 0.7)
 {
 	//handle options
 	//todo: ftol, xtol
@@ -1015,8 +1027,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		if ((stopCode == "all_good") && (minA > 0.0)) return;
 	}
 	// solver step monitor end
-	
-	// initialize solver	
+
+	// initialize solver
 	CholmodSolver solver;
 	solver.analyzePattern(mat);
 	// initialize solver end
@@ -1046,7 +1058,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 
 	for (int i = 1; i < maxIter; ++i)
-	{	
+	{
 		formulation.getLiftedEnergyGradHessian(x,energy,grad,mat);
 
 		// solver step monitor
@@ -1149,7 +1161,7 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		}
 		out_file << std::endl;
 	}
-	
+
 	if (options.record_minArea)
 	{
 		const std::vector<double>& minAreaRecord = options.minAreaRecord;
@@ -1313,10 +1325,10 @@ int main(int argc, char const *argv[])
 	VectorXd x = myLifted.x0;
 
 	// Laplacian_precondition_gradient_descent(myLifted,x,30);
-	
+
 	projected_Newton(myLifted,x,options);
 	exportResult(resFile,myLifted,x,options);
-	
+
 
 	return 0;
 }
