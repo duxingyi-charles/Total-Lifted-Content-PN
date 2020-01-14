@@ -10,6 +10,8 @@
 #include <eigen3/Eigen/Sparse>
 #include <eigen3/Eigen/CholmodSupport>
 
+#include <chrono>
+
 
 using namespace std;
 using namespace Eigen;
@@ -1325,8 +1327,11 @@ int main(int argc, char const *argv[])
 	VectorXd x = myLifted.x0;
 
 	// Laplacian_precondition_gradient_descent(myLifted,x,30);
-
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	projected_Newton(myLifted,x,options);
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
+
 	exportResult(resFile,myLifted,x,options);
 
 
