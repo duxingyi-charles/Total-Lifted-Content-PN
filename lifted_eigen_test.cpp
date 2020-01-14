@@ -815,8 +815,7 @@ public:
 		energy = 0.0;
 		MatrixXd fullGrad = MatrixXd::Zero(V.rows(),V.cols());
 
-		std::vector<eigenT> tripletList;
-		tripletList.reserve(8*vDim*vDim*freeI.size());
+		std::vector<eigenT> tripletList(3*3*vDim*vDim*F.cols());
 
 		//
 
@@ -865,28 +864,27 @@ public:
 			hess = eigenVecs * (eigenVals.asDiagonal()) * eigenVecs.transpose();
 			//end project hess to PSD
 
-
-			#pragma omp critical
+			int current_index = i*3*3*vDim*vDim;
+			Vector3i indices = F_free.col(i);
+			for (int j = 0; j < 3; ++j)
 			{
-				Vector3i indices = F_free.col(i);
-				for (int j = 0; j < 3; ++j)
+				int idx_j = indices(j);
+				for (int k = 0; k < 3; ++k)
 				{
-					int idx_j = indices(j);
-					for (int k = 0; k < 3; ++k)
-					{
-						int idx_k = indices(k);
-						if (idx_j!=-1 && idx_k!=-1) {
-							for (int l = 0; l < vDim; ++l)
+					int idx_k = indices(k);
+					if (idx_j!=-1 && idx_k!=-1) {
+						for (int l = 0; l < vDim; ++l)
+						{
+							for (int n = 0; n < vDim; ++n)
 							{
-								for (int n = 0; n < vDim; ++n)
-								{
-									tripletList.push_back(eigenT(idx_j*vDim+l,idx_k*vDim+n,hess(j*vDim+l,k*vDim+n)));
-								}
+								tripletList[current_index] = eigenT(idx_j*vDim+l,idx_k*vDim+n,hess(j*vDim+l,k*vDim+n));
+								++current_index;
 							}
 						}
 					}
 				}
 			}
+			
 
 		}
 
