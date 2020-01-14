@@ -818,8 +818,6 @@ public:
 		std::vector<eigenT> tripletList;
 		tripletList.reserve(8*vDim*vDim*freeI.size());
 
-		//eigen solver to project hessian to PSD
-		Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(3*vDim);
 		//
 
 		#pragma omp parallel
@@ -855,7 +853,7 @@ public:
 			}
 
 			//project hess to PSD
-			eigenSolver.compute(hess);
+			Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(hess);
 			VectorXd eigenVals = eigenSolver.eigenvalues();
 			for (int j = 0; j < eigenVals.size(); ++j)
 			{
