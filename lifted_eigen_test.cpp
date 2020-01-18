@@ -1047,13 +1047,13 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	}
 	// backtracking line search
 	// double gp = 0.5 * grad.transpose() * p;
-	// double gp = 1e-4 * grad.transpose() * p;
+	double gp = 1e-4 * grad.transpose() * p;
 
 	double step_size = 1.0;
 	x_next = x + step_size * p;
 	energy_next = formulation.getLiftedEnergy(x_next);
-	// while (energy_next > energy + step_size * gp) {
-	while (energy_next >= energy) {
+	while (energy_next > energy + step_size * gp) {
+	// while (energy_next >= energy) {
 		step_size *= shrink;
 		x_next = x + step_size * p;
 		energy_next = formulation.getLiftedEnergy(x_next);
@@ -1090,12 +1090,12 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 		// backtracking line search
 		// double gp = 0.5 * grad.transpose() * p;
-		// double gp = 1e-4 * grad.transpose() * p;
+		double gp = 1e-4 * grad.transpose() * p;
 		double step_size = 1.0;
 		x_next = x + step_size * p;
 		energy_next = formulation.getLiftedEnergy(x_next);
-		// while (energy_next > energy + step_size * gp) {
-		while (energy_next >= energy) {
+		while (energy_next > energy + step_size * gp) {
+		// while (energy_next >= energy) {
 			step_size *= shrink;
 			x_next = x + step_size * p;
 			energy_next = formulation.getLiftedEnergy(x_next);
