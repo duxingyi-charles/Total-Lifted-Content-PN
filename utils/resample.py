@@ -9,7 +9,7 @@ import math
 import numpy as np
 from numpy.linalg import norm
 import heapq
-import pickle
+import json
 
 def parse_args():
     parser = argparse.ArgumentParser(__doc__);
@@ -22,7 +22,7 @@ def parse_args():
 
 def unpack_font_file(font_file):
     with open(font_file, 'rb') as fin:
-        font_data = pickle.load(fin);
+        font_data = json.load(fin);
         return font_data;
 
 def parse_font_file(font_data):
