@@ -979,6 +979,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 {
 	//handle options
 	//todo: ftol, xtol
+	double ftol_rel = options.ftol_rel;
+	double ftol_abs = options.ftol_abs;
 	int maxIter = options.maxeval;
 	//
 	std::string stopCode = options.stopCode;
@@ -1060,6 +1062,9 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	}
 	//
 	x = x_next;
+	//check ftol
+	if (fabs(energy_next-energy) < ftol_abs) return;
+	if (fabs((energy_next-energy)/energy) < ftol_rel) return;
 
 
 	for (int i = 1; i < maxIter; ++i)
@@ -1103,6 +1108,9 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		//
 		x = x_next;
 
+		//check ftol
+		if (fabs(energy_next-energy) < ftol_abs) return;
+		if (fabs((energy_next-energy)/energy) < ftol_rel) return;
 	}
 }
 
