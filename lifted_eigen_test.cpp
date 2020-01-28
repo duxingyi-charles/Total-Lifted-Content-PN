@@ -922,17 +922,7 @@ public:
 };
 
 
-// class OptimizationSolver
-// {
-// public:
-// 	OptimizationSolver(LiftedFormulation& formulation, SolverOptionManager& option);
-// 	~OptimizationSolver();
 
-// 	VectorXd x0;
-
-
-
-// };
 
 
 void Laplacian_precondition_gradient_descent(LiftedFormulation& formulation, VectorXd& x, int maxIter)
@@ -983,9 +973,10 @@ void Laplacian_precondition_gradient_descent(LiftedFormulation& formulation, Vec
 void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionManager& options, double shrink = 0.7)
 {
 	//handle options
-	//todo: ftol, xtol
+	//todo: xtol
 	double ftol_rel = options.ftol_rel;
 	double ftol_abs = options.ftol_abs;
+	double gtol_abs = options.gtol_abs;
 	int maxIter = options.maxeval;
 	//
 	std::string stopCode = options.stopCode;
@@ -1070,6 +1061,9 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	//check ftol
 	if (fabs(energy_next-energy) < ftol_abs) return;
 	if (fabs((energy_next-energy)/energy) < ftol_rel) return;
+	//check gtol
+	if (grad.norm() < gtol_abs) return;
+
 
 
 	for (int i = 1; i < maxIter; ++i)
@@ -1116,6 +1110,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		//check ftol
 		if (fabs(energy_next-energy) < ftol_abs) return;
 		if (fabs((energy_next-energy)/energy) < ftol_rel) return;
+		//check gtol
+		if (grad.norm() < gtol_abs) return;
 	}
 }
 
