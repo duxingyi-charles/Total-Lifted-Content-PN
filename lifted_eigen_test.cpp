@@ -128,7 +128,7 @@ public:
 	double ftol_rel;
 	double xtol_abs;
 	double xtol_rel;
-	//double gtol_abs;  //todo: add gtol_abs. also need to change code in Mathematica
+	double gtol_abs;  //todo: add gtol_abs. also need to change code in Mathematica
 	int maxeval;
 	std::string algorithm;
 	std::string stopCode;
@@ -146,18 +146,15 @@ public:
 
 	void printOptions()
 	{
-		std::cout << "ftol_abs:\t" <<  ftol_abs << "\n";
-		std::cout << "ftol_rel:\t" <<  ftol_rel << "\n";
-		std::cout << "xtol_abs:\t" <<  xtol_abs << "\n";
-		std::cout << "xtol_rel:\t" <<  xtol_rel << "\n";
-		std::cout << "maxeval:\t" <<  maxeval << "\n";
+		std::cout << "ftol_abs:\t"  <<  ftol_abs  << "\n";
+		std::cout << "ftol_rel:\t"  <<  ftol_rel  << "\n";
+		std::cout << "xtol_abs:\t"  <<  xtol_abs  << "\n";
+		std::cout << "xtol_rel:\t"  <<  xtol_rel  << "\n";
+		std::cout << "gtol_abs:\t"  <<  gtol_abs  << "\n";
+		std::cout << "maxeval:\t"   <<  maxeval   << "\n";
 		std::cout << "algorithm:\t" <<  algorithm << "\n";
-		std::cout << "stopCode:\t" <<  stopCode << "\n";
-		std::cout << "record:  \t" <<  "{ ";
-		// for (std::vector<std::string>::iterator i = record.begin(); i != record.end(); ++i)
-		// {
-		// 	std::cout << *i << " ";
-		// }
+		std::cout << "stopCode:\t"  <<  stopCode  << "\n";
+		std::cout << "record:  \t"  <<  "{ ";
 		if (record_vert)    std::cout << "vert ";
 		if (record_energy)  std::cout << "energy ";
 		if (record_minArea) std::cout << "minArea ";
@@ -213,6 +210,14 @@ public:
 				break;
 			}
 			in_file >> xtol_rel;
+
+			in_file >> optName;
+			if (optName != "gtol_abs")
+			{
+				normal = 100;
+				break;
+			}
+			in_file >> gtol_abs;
 
 			in_file >> optName;
 			if (optName != "algorithm")
