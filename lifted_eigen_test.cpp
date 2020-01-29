@@ -4,6 +4,8 @@
 #include <string>
 #include <cmath>
 #include <limits>
+#include <algorithm>
+
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigenvalues>
@@ -106,15 +108,17 @@ class SolverOptionManager
 public:
 	//default options
 	SolverOptionManager():
-	ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8),
+	ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
 	maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
-	/*record()*/ record_vert(false), record_energy(false), record_minArea(false)
+	/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
+	record_gradient(false), record_searchDirection(false)
 	{};
 	//import options from file
 	SolverOptionManager(const char* filename):
-	ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8),
+	ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
 	maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
-	/*record()*/ record_vert(false), record_energy(false), record_minArea(false)
+	/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
+	record_gradient(false), record_searchDirection(false)
 	{
 		if (!importOptions(filename))
 		{
@@ -138,9 +142,13 @@ public:
 	bool record_vert;
 	bool record_energy;
 	bool record_minArea;
+	bool record_gradient;
+	bool record_searchDirection;
 	std::vector<MatrixXd> vertRecord;
 	std::vector<double> energyRecord;
 	std::vector<double> minAreaRecord;
+	std::vector<VectorXd> gradientRecord;
+	std::vector<VectorXd> searchDirectionRecord;
 
 
 
@@ -158,6 +166,8 @@ public:
 		if (record_vert)    std::cout << "vert ";
 		if (record_energy)  std::cout << "energy ";
 		if (record_minArea) std::cout << "minArea ";
+		if (record_gradient) std::cout << "gradient ";
+		if (record_searchDirection) std::cout << "searchDirection "; 
 		std::cout << "}" << std::endl;
 
 
@@ -268,6 +278,14 @@ public:
 				if (cur_record == "minArea")
 				{
 					record_minArea = true;
+				}
+				if (cur_record == "gradient")
+				{
+					record_gradient = true;
+				}
+				if (cur_record == "searchDirection")
+				{
+					record_searchDirection = true;
 				}
 			}
 
@@ -575,6 +593,7 @@ public:
 				++ii;
 			}
 		}
+		std::sort(freeI.data(),freeI.data()+freeI.size());
 
 
 		// compute indexDict and F_free
@@ -1004,6 +1023,22 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		record_minArea = true;
 		minAreaRecord.resize(0);
 	}
+	//
+	bool record_gradient = false;
+	std::vector<VectorXd>& gradientRecord = options.gradientRecord;
+	if (options.record_gradient)
+	{
+		record_gradient = true;
+		gradientRecord.resize(0);
+	}
+	//
+	bool record_searchDirection = false;
+	std::vector<VectorXd>& searchDirectionRecord = options.searchDirectionRecord;
+	if (options.record_searchDirection)
+	{
+		record_searchDirection = true;
+		searchDirectionRecord.resize(0);
+	}
 	//handle options end
 
 	//
@@ -1021,11 +1056,13 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	// solver step monitor
 	if (record_vert) vertRecord.push_back(formulation.V);
 	if (record_energy) energyRecord.push_back(energy);
+	if (record_gradient) gradientRecord.push_back(grad);
 	if (record_minArea || stopCode == "all_good") {
 		double minA = computeMinSignedArea(formulation.V, formulation.F);
 		if (record_minArea) minAreaRecord.push_back(minA);
 		if ((stopCode == "all_good") && (minA > 0.0)) return;
 	}
+
 	// solver step monitor end
 
 	// initialize solver
@@ -1043,6 +1080,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
   		cout << "iter 0: solving failed" << endl;
   		return;
 	}
+	if (record_searchDirection) searchDirectionRecord.push_back(p);
+
 	// backtracking line search
 	// double gp = 0.5 * grad.transpose() * p;
 	double gp = 1e-4 * grad.transpose() * p;
@@ -1073,6 +1112,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		// solver step monitor
 		if (record_vert) vertRecord.push_back(formulation.V);
 		if (record_energy) energyRecord.push_back(energy);
+		if (record_gradient) gradientRecord.push_back(grad);
 		if (record_minArea || stopCode == "all_good") {
 			double minA = computeMinSignedArea(formulation.V, formulation.F);
 			if (record_minArea) minAreaRecord.push_back(minA);
@@ -1091,6 +1131,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	  		cout << "iter " << i << ": solving failed" << endl;
 	  		return;
 		}
+		if (record_searchDirection) searchDirectionRecord.push_back(p);
 
 		// backtracking line search
 		// double gp = 0.5 * grad.transpose() * p;
@@ -1186,6 +1227,44 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		for (int i = 0; i < n_record; ++i)
 		{
 			out_file << minAreaRecord[i] << " ";
+		}
+		out_file << std::endl;
+	}
+
+	if (options.record_gradient)
+	{
+		const std::vector<VectorXd>& gradientRecord = options.gradientRecord;
+		unsigned n_record = gradientRecord.size();
+		unsigned n_free = formulation.freeI.size();
+		out_file << "gradient " << n_record << " " << n_free << " " << ndim << std::endl;
+		for (int i = 0; i < n_record; ++i)
+		{
+			for (int j = 0; j < n_free; ++j)
+			{
+				for (int k = 0; k < ndim; ++k)
+				{
+					out_file << gradientRecord[i](j*ndim + k) << " ";
+				}
+			}
+		}
+		out_file << std::endl;
+	}
+
+	if (options.record_searchDirection)
+	{
+		const std::vector<VectorXd>& searchDirectionRecord = options.searchDirectionRecord;
+		unsigned n_record = searchDirectionRecord.size();
+		unsigned n_free = formulation.freeI.size();
+		out_file << "searchDirection " << n_record << " " << n_free << " " << ndim << std::endl;
+		for (int i = 0; i < n_record; ++i)
+		{
+			for (int j = 0; j < n_free; ++j)
+			{
+				for (int k = 0; k < ndim; ++k)
+				{
+					out_file << searchDirectionRecord[i](j*ndim + k) << " ";
+				}
+			}
 		}
 		out_file << std::endl;
 	}
