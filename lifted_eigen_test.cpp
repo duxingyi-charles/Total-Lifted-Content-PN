@@ -842,6 +842,16 @@ public:
 
 		std::vector<eigenT> tripletList(3*3*vDim*vDim*F.cols());
 
+		// triangle-wise Hessian of signed area
+		// this is used later in the PSD projection step
+		MatrixXd signedHess(3*2,3*2);
+		signedHess << 	0.0, 0.0, 0.0, 0.5, 0.0, -0.5,
+						0.0, 0.0, -0.5, 0.0, 0.5, 0.0,
+						0.0, -0.5, 0.0, 0.0, 0.0, 0.5,
+						0.5, 0.0, 0.0, 0.0, -0.5, 0.0,
+						0.0, 0.5, 0.0, -0.5, 0.0, 0.0,
+						-0.5, 0.0, 0.5, 0.0, 0.0, 0.0;
+
 		//
 
 		#pragma omp parallel
@@ -874,6 +884,7 @@ public:
 			}
 
 			//project hess to PSD
+
 			Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(hess);
 			VectorXd eigenVals = eigenSolver.eigenvalues();
 			for (int j = 0; j < eigenVals.size(); ++j)
