@@ -885,6 +885,11 @@ public:
 
 			//project hess to PSD
 
+			// modify Hessian before PSD projection
+			double signed_area = tri_signed_area(vert.col(0),vert.col(1),vert.col(2));
+			if (signed_area < 0.0) hess += signedHess;
+			else if (signed_area > 0.0) hess -= signedHess;
+
 			Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(hess);
 			VectorXd eigenVals = eigenSolver.eigenvalues();
 			for (int j = 0; j < eigenVals.size(); ++j)
