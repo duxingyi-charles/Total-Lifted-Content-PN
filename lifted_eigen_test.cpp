@@ -887,8 +887,14 @@ public:
 
 			// modify Hessian before PSD projection
 			double signed_area = tri_signed_area(vert.col(0),vert.col(1),vert.col(2));
-			if (signed_area < 0.0) hess += signedHess;
-			else if (signed_area > 0.0) hess -= signedHess;
+
+			// policy 1
+			if (signed_area > 0.0) hess -= signedHess;
+
+			// policy 3
+			// if (signed_area < 0.0) hess += signedHess;
+			// else if (signed_area > 0.0) hess -= signedHess;
+
 
 			Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(hess);
 			VectorXd eigenVals = eigenSolver.eigenvalues();
@@ -1099,8 +1105,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	if (record_searchDirection) searchDirectionRecord.push_back(p);
 
 	// backtracking line search
-	// double gp = 0.5 * grad.transpose() * p;
-	double gp = 1e-4 * grad.transpose() * p;
+	double gp = 0.5 * grad.transpose() * p;
+	// double gp = 1e-4 * grad.transpose() * p;
 
 	double step_size = 1.0;
 	x_next = x + step_size * p;
