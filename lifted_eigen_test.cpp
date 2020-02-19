@@ -111,14 +111,14 @@ public:
 	ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
 	maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 	/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
-	record_gradient(false), record_searchDirection(false)
+	record_gradient(false), record_searchDirection(false), record_stepSize(false)
 	{};
 	//import options from file
 	SolverOptionManager(const char* filename):
 	ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
 	maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 	/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
-	record_gradient(false), record_searchDirection(false)
+	record_gradient(false), record_searchDirection(false), record_stepSize(false)
 	{
 		if (!importOptions(filename))
 		{
@@ -144,11 +144,13 @@ public:
 	bool record_minArea;
 	bool record_gradient;
 	bool record_searchDirection;
+	bool record_stepSize;
 	std::vector<MatrixXd> vertRecord;
 	std::vector<double> energyRecord;
 	std::vector<double> minAreaRecord;
 	std::vector<VectorXd> gradientRecord;
 	std::vector<VectorXd> searchDirectionRecord;
+	std::vector<double> stepSizeRecord;
 
 
 
@@ -168,6 +170,7 @@ public:
 		if (record_minArea) std::cout << "minArea ";
 		if (record_gradient) std::cout << "gradient ";
 		if (record_searchDirection) std::cout << "searchDirection "; 
+		if (record_stepSize)	std::cout << "stepSize ";
 		std::cout << "}" << std::endl;
 
 
@@ -286,6 +289,10 @@ public:
 				if (cur_record == "searchDirection")
 				{
 					record_searchDirection = true;
+				}
+				if (cur_record == "stepSize")
+				{
+					record_stepSize = true;
 				}
 			}
 
@@ -886,14 +893,19 @@ public:
 			//project hess to PSD
 
 			// modify Hessian before PSD projection
-			double signed_area = tri_signed_area(vert.col(0),vert.col(1),vert.col(2));
+			
 
 			// policy 1
-			if (signed_area > 0.0) hess -= signedHess;
+			// double signed_area = tri_signed_area(vert.col(0),vert.col(1),vert.col(2));
+			// if (signed_area > 0.0) hess -= signedHess;
 
 			// policy 3
+			// double signed_area = tri_signed_area(vert.col(0),vert.col(1),vert.col(2));
 			// if (signed_area < 0.0) hess += signedHess;
 			// else if (signed_area > 0.0) hess -= signedHess;
+
+			// policy 5
+			hess -= signedHess;
 
 
 			Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(hess);
@@ -1061,6 +1073,14 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		record_searchDirection = true;
 		searchDirectionRecord.resize(0);
 	}
+	//
+	bool record_stepSize = false;
+	std::vector<double>& stepSizeRecord = options.stepSizeRecord;
+	if (options.record_stepSize)
+	{
+		record_stepSize = true;
+		stepSizeRecord.resize(0);
+	}
 	//handle options end
 
 	//
@@ -1106,7 +1126,6 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 	// backtracking line search
 	double gp = 0.5 * grad.transpose() * p;
-	// double gp = 1e-4 * grad.transpose() * p;
 
 	double step_size = 1.0;
 	x_next = x + step_size * p;
@@ -1119,6 +1138,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	}
 	//
 	x = x_next;
+	//
+	if (record_stepSize) stepSizeRecord.push_back(step_size);
 	//check ftol
 	if (fabs(energy_next-energy) < ftol_abs) return;
 	if (fabs((energy_next-energy)/energy) < ftol_rel) return;
@@ -1156,8 +1177,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		if (record_searchDirection) searchDirectionRecord.push_back(p);
 
 		// backtracking line search
-		// double gp = 0.5 * grad.transpose() * p;
-		double gp = 1e-4 * grad.transpose() * p;
+		double gp = 0.5 * grad.transpose() * p;
 		double step_size = 1.0;
 		x_next = x + step_size * p;
 		energy_next = formulation.getLiftedEnergy(x_next);
@@ -1169,7 +1189,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		}
 		//
 		x = x_next;
-
+		//
+		if (record_stepSize) stepSizeRecord.push_back(step_size);
 		//check ftol
 		if (fabs(energy_next-energy) < ftol_abs) return;
 		if (fabs((energy_next-energy)/energy) < ftol_rel) return;
@@ -1287,6 +1308,18 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 					out_file << searchDirectionRecord[i](j*ndim + k) << " ";
 				}
 			}
+		}
+		out_file << std::endl;
+	}
+
+	if (options.record_stepSize)
+	{
+		const std::vector<double>& stepSizeRecord = options.stepSizeRecord;
+		unsigned n_record = stepSizeRecord.size();
+		out_file << "stepSize " << n_record << std::endl;
+		for (int i = 0; i < n_record; ++i)
+		{
+			out_file << stepSizeRecord[i] << " ";
 		}
 		out_file << std::endl;
 	}
