@@ -44,10 +44,10 @@ bool importData(const char* filename,
     // restV
     in_file >> n >> ndim;
     restV.resize(n);
-    for (int i = 0; i < n; ++i)
+    for (size_t i = 0; i < n; ++i)
     {
     	std::vector<double> v(ndim);
-    	for (int j = 0; j < ndim; ++j)
+    	for (size_t j = 0; j < ndim; ++j)
     	{
     		in_file >> v[j];
     	}
@@ -57,10 +57,10 @@ bool importData(const char* filename,
     //initV
     in_file >> n >> ndim;
     initV.resize(n);
-    for (int i = 0; i < n; ++i)
+    for (size_t i = 0; i < n; ++i)
     {
     	std::vector<double> v(ndim);
-    	for (int j = 0; j < ndim; ++j)
+    	for (size_t j = 0; j < ndim; ++j)
     	{
     		in_file >> v[j];
     	}
@@ -71,10 +71,10 @@ bool importData(const char* filename,
     size_t simplexSize;
     in_file >> n >> simplexSize;
     F.resize(n);
-    for (int i = 0; i < n; ++i)
+    for (size_t i = 0; i < n; ++i)
     {
     	std::vector<unsigned> v(simplexSize);
-    	for (int j = 0; j < simplexSize; ++j)
+    	for (size_t j = 0; j < simplexSize; ++j)
     	{
     		in_file >> v[j];
     	}
@@ -84,7 +84,7 @@ bool importData(const char* filename,
     //handles
     in_file >> n;
     handles.resize(n);
-    for (int i = 0; i < n; ++i)
+    for (size_t i = 0; i < n; ++i)
     {
     	unsigned v;
     	in_file >> v;
@@ -126,7 +126,7 @@ public:
 		}
 	};
 
-	~SolverOptionManager() {};
+	~SolverOptionManager() = default;
 
 	double ftol_abs;
 	double ftol_rel;
@@ -266,7 +266,7 @@ public:
 			in_file >> n;
 			std::string cur_record;
 			//record.resize(n);
-			for (int i = 0; i < n; ++i)
+			for (size_t i = 0; i < n; ++i)
 			{
 				//in_file >> record[i];
 				in_file >> cur_record;
@@ -510,7 +510,7 @@ void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
 	int vDim = v1.size();
 
 	// dDdV
-	std::vector<std::vector<VectorXd>> dDdV(3);
+	std::vector<std::vector<VectorXd> > dDdV(3);
 	for (int i = 0; i < 3; ++i)
 	{
 		dDdV[i].resize(3);
@@ -578,7 +578,7 @@ class LiftedFormulation
 {
 public:
 	LiftedFormulation(MatrixXd& restV, MatrixXd& initV, MatrixXi& restF,
-		VectorXi& handles, std::string form, double alpha) :
+		VectorXi& handles, const std::string& form, double alpha) :
 	V(initV), F(restF)
 	{
 		// compute freeI
@@ -586,7 +586,7 @@ public:
 		vDim = V.rows();
 
 		std::vector<bool> freeQ(nV, true);
-		for (int i = 0; i < handles.size(); ++i)
+		for (auto i = 0; i < handles.size(); ++i)
 		{
 			freeQ[handles(i)] = false;
 		}
@@ -605,15 +605,15 @@ public:
 
 		// compute indexDict and F_free
 		indexDict = VectorXi::Constant(nV,-1);
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			indexDict(freeI(i)) = i;
 		}
 
 		F_free.resize(F.rows(),F.cols());
-		for (int i = 0; i < F.cols(); ++i)
+		for (auto i = 0; i < F.cols(); ++i)
 		{
-			for (int j = 0; j < F.rows(); ++j)
+			for (auto j = 0; j < F.rows(); ++j)
 			{
 				F_free(j,i) = indexDict(F(j,i));
 			}
@@ -633,7 +633,7 @@ public:
 
 		// compute x0 from initV
 		x0.resize(vDim * freeI.size());
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			int vi = freeI(i);
 			for (int j = 0; j < vDim; ++j)
@@ -647,7 +647,7 @@ public:
 	}
 	;
 
-	~LiftedFormulation() {};
+	~LiftedFormulation() = default;
 
 	VectorXi freeI;   // indices of free vertices
 	//int nV;         // number of vertices
@@ -665,7 +665,7 @@ public:
 	// x = Flatten(freeV)
 	void update_V(const VectorXd& x)
 	{
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			for (int j = 0; j < vDim; ++j)
 			{
@@ -678,7 +678,7 @@ public:
 	double getLiftedEnergy(const VectorXd& x)
 	{
 		// update V
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			for (int j = 0; j < vDim; ++j)
 			{
@@ -688,7 +688,7 @@ public:
 
 		// compute lifted energy
 		double energy = 0.0;
-		for (int i = 0; i < F.cols(); ++i)
+		for (auto i = 0; i < F.cols(); ++i)
 		{
 			MatrixXd vert(vDim,3);
 			vert.col(0) = V.col(F(0,i));
@@ -707,7 +707,7 @@ public:
 	void getLiftedEnergyGrad(const VectorXd& x, double& energy, VectorXd& grad)
 	{
 		// update V
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			for (int j = 0; j < vDim; ++j)
 			{
@@ -719,7 +719,7 @@ public:
 		energy = 0.0;
 		MatrixXd fullGrad = MatrixXd::Zero(V.rows(),V.cols());
 
-		for (int i = 0; i < F.cols(); ++i)
+		for (auto i = 0; i < F.cols(); ++i)
 		{
 			int i1,i2,i3;
 			i1 = F(0,i);
@@ -744,7 +744,7 @@ public:
 
 		// get free gradient
 		grad.resize(x.size());
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			for (int j = 0; j < vDim; ++j)
 			{
@@ -757,7 +757,7 @@ public:
 	void getLiftedEnergyGradLaplacian(const VectorXd& x, double& energy, VectorXd& grad, SpMat& Lap)
 	{
 		// update V
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			for (int j = 0; j < vDim; ++j)
 			{
@@ -772,7 +772,7 @@ public:
 		std::vector<eigenT> tripletList;
 		tripletList.reserve(8*vDim*freeI.size());
 
-		for (int i = 0; i < F.cols(); ++i)
+		for (auto i = 0; i < F.cols(); ++i)
 		{
 			int i1,i2,i3;
 			i1 = F(0,i);
@@ -807,7 +807,8 @@ public:
 						double lap_jk = lap(j,k);
 						for (int l = 0; l < vDim; ++l)
 						{
-							tripletList.push_back(eigenT(idx_j*vDim+l,idx_k*vDim+l,lap_jk));
+//							tripletList.push_back(eigenT(idx_j*vDim+l,idx_k*vDim+l,lap_jk));
+							tripletList.emplace_back(idx_j*vDim+l,idx_k*vDim+l,lap_jk);
 						}
 					}
 				}
@@ -817,7 +818,7 @@ public:
 
 		// get free gradient
 		grad.resize(x.size());
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			for (int j = 0; j < vDim; ++j)
 			{
@@ -834,7 +835,7 @@ public:
 	void getLiftedEnergyGradHessian(const VectorXd& x, double& energy, VectorXd& grad, SpMat& Hess)
 	{
 		// update V
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			for (int j = 0; j < vDim; ++j)
 			{
@@ -863,7 +864,7 @@ public:
 
 		#pragma omp parallel
 		#pragma omp for
-		for (int i = 0; i < F.cols(); ++i)
+		for (auto i = 0; i < F.cols(); ++i)
 		{
 			// cout << "face " << i << ": " << std::endl;
 			int i1,i2,i3;
@@ -910,7 +911,7 @@ public:
 
 			Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(hess);
 			VectorXd eigenVals = eigenSolver.eigenvalues();
-			for (int j = 0; j < eigenVals.size(); ++j)
+			for (auto j = 0; j < eigenVals.size(); ++j)
 			{
 				if (eigenVals(j) < 0.0) {
 					eigenVals(j) = 0.0;
@@ -945,14 +946,15 @@ public:
 		}
 
 		// get total energy
-		for (std::vector<double>::iterator i = energyList.begin(); i != energyList.end(); ++i)
+//		for (std::vector<double>::iterator i = energyList.begin(); i != energyList.end(); ++i)
+		for (double i : energyList)
 		{
-			energy += *i;
+			energy += i;
 		}
 
 		// get free gradient
 		grad.resize(x.size());
-		for (int i = 0; i < freeI.size(); ++i)
+		for (auto i = 0; i < freeI.size(); ++i)
 		{
 			for (int j = 0; j < vDim; ++j)
 			{
@@ -961,9 +963,10 @@ public:
 		}
 
 		// add small positive values to the diagonal of Hessian
-		for (int i = 0; i < vDim * freeI.size(); ++i)
+		for (auto i = 0; i < vDim * freeI.size(); ++i)
 		{
-			tripletList.push_back(eigenT(i,i,1e-8));
+//			tripletList.push_back(eigenT(i,i,1e-8));
+			tripletList.emplace_back(i,i,1e-8);
 		}
 
 		// get free Hessian
@@ -1221,9 +1224,9 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 	unsigned nv = V.cols();
 	unsigned ndim = V.rows();
 	out_file << "resV " << nv << " " << ndim << "\n";
-	for (int i = 0; i < nv; ++i)
+	for (auto i = 0; i < nv; ++i)
 	{
-		for (int j = 0; j < ndim; ++j)
+		for (auto j = 0; j < ndim; ++j)
 		{
 			out_file << V(j,i) << " ";
 		}
@@ -1236,11 +1239,11 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		const std::vector<MatrixXd>& vertRecord = options.vertRecord;
 		unsigned n_record = vertRecord.size();
 		out_file << "vert " << n_record << " " << nv << " " << ndim << std::endl;
-		for (int i = 0; i < n_record; ++i)
+		for (auto i = 0; i < n_record; ++i)
 		{
-			for (int j = 0; j < nv; ++j)
+			for (auto j = 0; j < nv; ++j)
 			{
-				for (int k = 0; k < ndim; ++k)
+				for (auto k = 0; k < ndim; ++k)
 				{
 					out_file << vertRecord[i](k,j) << " ";
 				}
@@ -1255,7 +1258,7 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		const std::vector<double>& energyRecord = options.energyRecord;
 		unsigned n_record = energyRecord.size();
 		out_file << "energy " << n_record << std::endl;
-		for (int i = 0; i < n_record; ++i)
+		for (auto i = 0; i < n_record; ++i)
 		{
 			out_file << energyRecord[i] << " ";
 		}
@@ -1267,7 +1270,7 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		const std::vector<double>& minAreaRecord = options.minAreaRecord;
 		unsigned n_record = minAreaRecord.size();
 		out_file << "minArea " << n_record << std::endl;
-		for (int i = 0; i < n_record; ++i)
+		for (auto i = 0; i < n_record; ++i)
 		{
 			out_file << minAreaRecord[i] << " ";
 		}
@@ -1280,11 +1283,11 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		unsigned n_record = gradientRecord.size();
 		unsigned n_free = formulation.freeI.size();
 		out_file << "gradient " << n_record << " " << n_free << " " << ndim << std::endl;
-		for (int i = 0; i < n_record; ++i)
+		for (auto i = 0; i < n_record; ++i)
 		{
-			for (int j = 0; j < n_free; ++j)
+			for (auto j = 0; j < n_free; ++j)
 			{
-				for (int k = 0; k < ndim; ++k)
+				for (auto k = 0; k < ndim; ++k)
 				{
 					out_file << gradientRecord[i](j*ndim + k) << " ";
 				}
@@ -1299,11 +1302,11 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		unsigned n_record = searchDirectionRecord.size();
 		unsigned n_free = formulation.freeI.size();
 		out_file << "searchDirection " << n_record << " " << n_free << " " << ndim << std::endl;
-		for (int i = 0; i < n_record; ++i)
+		for (auto i = 0; i < n_record; ++i)
 		{
-			for (int j = 0; j < n_free; ++j)
+			for (auto j = 0; j < n_free; ++j)
 			{
-				for (int k = 0; k < ndim; ++k)
+				for (auto k = 0; k < ndim; ++k)
 				{
 					out_file << searchDirectionRecord[i](j*ndim + k) << " ";
 				}
@@ -1317,7 +1320,7 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		const std::vector<double>& stepSizeRecord = options.stepSizeRecord;
 		unsigned n_record = stepSizeRecord.size();
 		out_file << "stepSize " << n_record << std::endl;
-		for (int i = 0; i < n_record; ++i)
+		for (auto i = 0; i < n_record; ++i)
 		{
 			out_file << stepSizeRecord[i] << " ";
 		}
@@ -1383,7 +1386,7 @@ int main(int argc, char const *argv[])
 	}
 
 	VectorXi handles(raw_handles.size());
-	for (int i = 0; i < raw_handles.size(); ++i)
+	for (auto i = 0; i < raw_handles.size(); ++i)
 	{
 		handles(i) = raw_handles[i];
 	}
