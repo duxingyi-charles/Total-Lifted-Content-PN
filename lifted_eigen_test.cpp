@@ -675,7 +675,8 @@ public:
 	}
 
 
-	double getLiftedEnergy(const VectorXd& x)
+//	double getLiftedEnergy(const VectorXd& x)
+    long double getLiftedEnergy(const VectorXd& x)
 	{
 		// update V
 		for (auto i = 0; i < freeI.size(); ++i)
@@ -687,7 +688,15 @@ public:
 		}
 
 		// compute lifted energy
-		double energy = 0.0;
+
+		//debug
+		long double a = 0.0;
+//		double minA = 100.0;
+//		double maxA = 0.0;
+		//
+
+//		double energy = 0.0;
+        long double energy = 0.0;
 		for (auto i = 0; i < F.cols(); ++i)
 		{
 			MatrixXd vert(vDim,3);
@@ -697,9 +706,26 @@ public:
 
 			Vector3d r = restD.col(i);
 
-			energy += liftedTriArea(vert, r);
+			//debug
+			a = liftedTriArea(vert, r);
+//			std::cout << a << " ";
+//			minA = (a < minA) ? a : minA;
+//			maxA = (a > maxA) ? a : maxA;
+
+			energy += a;
+			//
+//			energy += liftedTriArea(vert, r);
 
 		}
+//		std::cout << std::endl;
+//        std::cout << energy << std::endl;
+		//debug
+//		std::cout << "---------" << std::endl;
+//		std::cout << "total lifted area:" << std::endl << energy << std::endl;
+//		std::cout << "min lifted area: " << std::endl << minA << std::endl;
+//        std::cout << "max lifted area: " << std::endl << maxA << std::endl;
+//        std::cout << "---------" << std::endl;
+		//
 
 		return energy;
 	}
@@ -832,8 +858,9 @@ public:
 
 	}
 
-	void getLiftedEnergyGradHessian(const VectorXd& x, double& energy, VectorXd& grad, SpMat& Hess)
-	{
+//	void getLiftedEnergyGradHessian(const VectorXd& x, double& energy, VectorXd& grad, SpMat& Hess)
+    void getLiftedEnergyGradHessian(const VectorXd& x, long double& energy, VectorXd& grad, SpMat& Hess)
+    {
 		// update V
 		for (auto i = 0; i < freeI.size(); ++i)
 		{
@@ -845,8 +872,10 @@ public:
 
 		// compute energy, gradient and Hessian
 		energy = 0.0;
-		std::vector<double> energyList(F.cols());
-		MatrixXd fullGrad = MatrixXd::Zero(V.rows(),V.cols());
+//		std::vector<double> energyList(F.cols());
+        std::vector<long double> energyList(F.cols());
+
+        MatrixXd fullGrad = MatrixXd::Zero(V.rows(),V.cols());
 
 		std::vector<eigenT> tripletList(3*3*vDim*vDim*F.cols());
 
@@ -946,11 +975,27 @@ public:
 		}
 
 		// get total energy
-//		for (std::vector<double>::iterator i = energyList.begin(); i != energyList.end(); ++i)
-		for (double i : energyList)
+
+		// debug
+//		double minA = 100.0;
+//		double maxA = 0.0;
+
+		for (long double i : energyList)
 		{
+//		    minA = (i < minA) ? i : minA;
+//		    maxA = (i > maxA) ? i : maxA;
+//            std::cout << i <<  " ";
+
 			energy += i;
 		}
+//		std::cout << std::endl;
+//        std::cout << energy << std::endl;
+//        std::cout << "---------" << std::endl;
+//        std::cout << "total lifted area:" << std::endl << energy << std::endl;
+//        std::cout << "min lifted area: " << std::endl << minA << std::endl;
+//        std::cout << "max lifted area: " << std::endl << maxA << std::endl;
+//        std::cout << "---------" << std::endl;
+		//
 
 		// get free gradient
 		grad.resize(x.size());
@@ -1026,7 +1071,7 @@ void Laplacian_precondition_gradient_descent(LiftedFormulation& formulation, Vec
 }
 
 
-void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionManager& options, double shrink = 0.7)
+void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionManager& options, long double shrink = 0.7)
 {
 	//handle options
 	//todo: xtol
@@ -1087,12 +1132,12 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	//handle options end
 
 	//
-	double energy;
+	long double energy;
 	VectorXd grad(x.size());
 	SpMat mat(x.size(),x.size());
 
 	VectorXd x_next(x.size());
-	double energy_next;
+	long double energy_next;
 
 
 	//first iter: initialize solver
@@ -1128,18 +1173,16 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	if (record_searchDirection) searchDirectionRecord.push_back(p);
 
 	// backtracking line search
-	double gp = 0.5 * grad.transpose() * p;
-
-	double step_size = 1.0;
+	long double gp = 0.5 * grad.transpose() * p;
+	long double step_size = 1.0;
 	x_next = x + step_size * p;
 	energy_next = formulation.getLiftedEnergy(x_next);
 	while (energy_next > energy + step_size * gp) {
-	// while (energy_next >= energy) {
-		step_size *= shrink;
-		x_next = x + step_size * p;
-		energy_next = formulation.getLiftedEnergy(x_next);
-	}
-	//
+        // while (energy_next >= energy)
+        step_size *= shrink;
+        x_next = x + step_size * p;
+        energy_next = formulation.getLiftedEnergy(x_next);
+    }
 	x = x_next;
 	//
 	if (record_stepSize) stepSizeRecord.push_back(step_size);
@@ -1180,8 +1223,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		if (record_searchDirection) searchDirectionRecord.push_back(p);
 
 		// backtracking line search
-		double gp = 0.5 * grad.transpose() * p;
-		double step_size = 1.0;
+		long double gp = 0.5 * grad.transpose() * p;
+		long double step_size = 1.0;
 		x_next = x + step_size * p;
 		energy_next = formulation.getLiftedEnergy(x_next);
 		while (energy_next > energy + step_size * gp) {
@@ -1394,90 +1437,14 @@ int main(int argc, char const *argv[])
 	//import options
 	SolverOptionManager options(optFile);
 
-	//test: compute squared edge length
-	// MatrixXd restD;
-	// computeSquaredEdgeLength(restV,F,restD);
-	//cout << restD << endl;
-
-	//test: compute Hessian for each triangle
-	// for (int i = 0; i < nf; ++i)
-	// {
-	// 	MatrixXd vert(initDim,3);
-	// 	vert.col(0) = initV.col(F(0,i));
-	// 	vert.col(1) = initV.col(F(1,i));
-	// 	vert.col(2) = initV.col(F(2,i));
-
-	// 	Vector3d r = restD.col(i);
-
-	// 	double area;
-	// 	MatrixXd gradient;
-	// 	MatrixXd Hessian;
-	// 	liftedTriAreaGradHessian(vert,r,area,gradient,Hessian);
-
-	// 	cout << "face: " << i << endl;
-	// 	cout << "lifted area: " << area << endl;
-	// 	cout << "gradient: " << endl;
-	// 	cout << gradient << endl;
-	// 	cout << "Hessian: " << endl;
-	// 	cout << Hessian << endl;
-	// 	cout << "--------------------" << endl;
-
-	// }
-
-
-	//test: compute energy, grad and Laplacian/Hessian
-	// LiftedFormulation myLifted(restV,initV,F,handles,form,alpha);
-	// VectorXd x0 = myLifted.x0;
-
-	// double    energy;
-	// VectorXd  grad;
-	// SpMat     mat;
-	// // myLifted.getLiftedEnergyGradLaplacian(x0,energy,grad,mat);
-	// myLifted.getLiftedEnergyGradHessian(x0,energy,grad,mat);
-
-	// cout << "energy: " << energy << endl;
-	// cout << "gradient:" << endl;
-	// cout << grad << endl;
-	// // cout << "Laplacian:" << endl;
-	// cout << "Hessian:" << endl;
-	// cout << mat << endl;
-
-	//test: sparse solver
-	// LiftedFormulation myLifted(restV,initV,F,handles,form,alpha);
-	// VectorXd x0 = myLifted.x0;
-
-	// double energy;
-	// VectorXd grad;
-	// SpMat mat;
-	// // myLifted.getLiftedEnergyGradHessian(x0,energy,grad,mat);
-	// myLifted.getLiftedEnergyGradLaplacian(x0,energy,grad,mat);
-
-	// CholmodSolver solver;
-	// solver.analyzePattern(mat);
-	// solver.factorize(mat);
-
-	// // solver.compute(mat);
-
-	// if(solver.info()!=Success) {
- //  		cout <<  "decomposition failed" << endl;
- //  		return -1;
-	// }
-
-	// VectorXd p = solver.solve(-grad);
-
-	// if(solver.info()!=Success) {
- //  		cout << "solving failed" << endl;
- //  		return -1;
-	// }
-
-	// cout << "p:" << endl;
-	// cout << p << endl;
-
-	//test: Laplacian PGD
+	//
 	LiftedFormulation myLifted(restV,initV,F,handles,form,alpha);
 	VectorXd x = myLifted.x0;
 
-	// Laplacian_precondition_gradient_descent(myLifted,x,30);
+    // dubug
+    std::cout.precision(std::numeric_limits< double >::max_digits10);
+
+	//projected newton
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	projected_Newton(myLifted,x,options);
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
