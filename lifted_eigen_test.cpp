@@ -663,20 +663,16 @@ public:
 
 
 	// x = Flatten(freeV)
-	void update_V(const VectorXd& x)
-	{
-		for (auto i = 0; i < freeI.size(); ++i)
-		{
-			for (int j = 0; j < vDim; ++j)
-			{
-				V(j,freeI(i)) = x[i*vDim + j];
-			}
-		}
-	}
-
+	void update_V(const VectorXd& x) {
+        for (auto i = 0; i < freeI.size(); ++i) {
+            for (int j = 0; j < vDim; ++j) {
+                V(j, freeI(i)) = x[i * vDim + j];
+            }
+        }
+    }
 
 //	double getLiftedEnergy(const VectorXd& x)
-    long double getLiftedEnergy(const VectorXd& x)
+    long double getLiftedEnergy(const VectorXd& x, std::vector<long double>& energyList)
 	{
 		// update V
 		for (auto i = 0; i < freeI.size(); ++i)
@@ -688,12 +684,7 @@ public:
 		}
 
 		// compute lifted energy
-
-		//debug
-		long double a = 0.0;
-//		double minA = 100.0;
-//		double maxA = 0.0;
-		//
+		energyList.resize(F.cols());
 
 //		double energy = 0.0;
         long double energy = 0.0;
@@ -707,24 +698,16 @@ public:
 			Vector3d r = restD.col(i);
 
 			//debug
-			a = liftedTriArea(vert, r);
-//			std::cout << a << " ";
-//			minA = (a < minA) ? a : minA;
-//			maxA = (a > maxA) ? a : maxA;
-
-			energy += a;
+			energyList[i] = liftedTriArea(vert, r);
 			//
 //			energy += liftedTriArea(vert, r);
 
 		}
-//		std::cout << std::endl;
-//        std::cout << energy << std::endl;
-		//debug
-//		std::cout << "---------" << std::endl;
-//		std::cout << "total lifted area:" << std::endl << energy << std::endl;
-//		std::cout << "min lifted area: " << std::endl << minA << std::endl;
-//        std::cout << "max lifted area: " << std::endl << maxA << std::endl;
-//        std::cout << "---------" << std::endl;
+
+		for (long double a : energyList) {
+		    energy += a;
+		}
+
 		//
 
 		return energy;
@@ -859,7 +842,7 @@ public:
 	}
 
 //	void getLiftedEnergyGradHessian(const VectorXd& x, double& energy, VectorXd& grad, SpMat& Hess)
-    void getLiftedEnergyGradHessian(const VectorXd& x, long double& energy, VectorXd& grad, SpMat& Hess)
+    void getLiftedEnergyGradHessian(const VectorXd& x, long double& energy, std::vector<long double>& energyList, VectorXd& grad, SpMat& Hess)
     {
 		// update V
 		for (auto i = 0; i < freeI.size(); ++i)
@@ -873,7 +856,8 @@ public:
 		// compute energy, gradient and Hessian
 		energy = 0.0;
 //		std::vector<double> energyList(F.cols());
-        std::vector<long double> energyList(F.cols());
+//        std::vector<long double> energyList(F.cols());
+        energyList.resize(F.cols());
 
         MatrixXd fullGrad = MatrixXd::Zero(V.rows(),V.cols());
 
@@ -975,27 +959,10 @@ public:
 		}
 
 		// get total energy
-
-		// debug
-//		double minA = 100.0;
-//		double maxA = 0.0;
-
 		for (long double i : energyList)
 		{
-//		    minA = (i < minA) ? i : minA;
-//		    maxA = (i > maxA) ? i : maxA;
-//            std::cout << i <<  " ";
-
 			energy += i;
 		}
-//		std::cout << std::endl;
-//        std::cout << energy << std::endl;
-//        std::cout << "---------" << std::endl;
-//        std::cout << "total lifted area:" << std::endl << energy << std::endl;
-//        std::cout << "min lifted area: " << std::endl << minA << std::endl;
-//        std::cout << "max lifted area: " << std::endl << maxA << std::endl;
-//        std::cout << "---------" << std::endl;
-		//
 
 		// get free gradient
 		grad.resize(x.size());
@@ -1133,15 +1100,16 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 	//
 	long double energy;
+	std::vector<long double> energyList;
 	VectorXd grad(x.size());
 	SpMat mat(x.size(),x.size());
 
 	VectorXd x_next(x.size());
 	long double energy_next;
-
+	std::vector<long double> energyList_next;
 
 	//first iter: initialize solver
-	formulation.getLiftedEnergyGradHessian(x,energy,grad,mat);
+	formulation.getLiftedEnergyGradHessian(x,energy,energyList,grad,mat);
 
 	// solver step monitor
 	if (record_vert) vertRecord.push_back(formulation.V);
@@ -1174,15 +1142,30 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 	// backtracking line search
 	long double gp = 0.5 * grad.transpose() * p;
+	std::cout << "gp: " << gp << std::endl;
 	long double step_size = 1.0;
 	x_next = x + step_size * p;
-	energy_next = formulation.getLiftedEnergy(x_next);
-	while (energy_next > energy + step_size * gp) {
-        // while (energy_next >= energy)
+	energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
+
+	long double energy_diff = 0.0;
+	for (auto j=0; j < energyList.size(); ++j) {
+	    energy_diff += (energyList_next[j] - energyList[j]);
+	}
+	std::cout  << energy_diff << "\t" << step_size * gp << std::endl;
+
+//	while (energy_next > energy + step_size * gp) {
+    while (energy_diff > step_size * gp) {
         step_size *= shrink;
         x_next = x + step_size * p;
-        energy_next = formulation.getLiftedEnergy(x_next);
+        energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
+
+        energy_diff = 0.0;
+        for (auto j=0; j < energyList.size(); ++j) {
+            energy_diff += (energyList_next[j] - energyList[j]);
+        }
+        std::cout << energy_diff <<"\t" << step_size * gp  << std::endl;
     }
+    std::cout << "final step size: " << step_size << std::endl;
 	x = x_next;
 	//
 	if (record_stepSize) stepSizeRecord.push_back(step_size);
@@ -1196,7 +1179,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 	for (int i = 1; i < maxIter; ++i)
 	{
-		formulation.getLiftedEnergyGradHessian(x,energy,grad,mat);
+		formulation.getLiftedEnergyGradHessian(x,energy,energyList,grad,mat);
 
 		// solver step monitor
 		if (record_vert) vertRecord.push_back(formulation.V);
@@ -1226,12 +1209,23 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		long double gp = 0.5 * grad.transpose() * p;
 		long double step_size = 1.0;
 		x_next = x + step_size * p;
-		energy_next = formulation.getLiftedEnergy(x_next);
-		while (energy_next > energy + step_size * gp) {
-		// while (energy_next >= energy) {
+		energy_next = formulation.getLiftedEnergy(x_next,energyList_next);
+
+		energy_diff = 0.0;
+        for (auto j=0; j < energyList.size(); ++j) {
+            energy_diff += (energyList_next[j] - energyList[j]);
+        }
+
+//		while (energy_next > energy + step_size * gp) {
+        while (energy_diff > step_size * gp) {
 			step_size *= shrink;
 			x_next = x + step_size * p;
-			energy_next = formulation.getLiftedEnergy(x_next);
+			energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
+
+            energy_diff = 0.0;
+            for (auto j=0; j < energyList.size(); ++j) {
+                energy_diff += (energyList_next[j] - energyList[j]);
+            }
 		}
 		//
 		x = x_next;
