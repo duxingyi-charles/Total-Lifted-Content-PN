@@ -369,8 +369,30 @@ double computeMinSignedArea(const MatrixXd& V, const MatrixXi& F)
 // Heron's formula and its derivatives
 double HeronTriArea(double d1, double d2, double d3)
 {
-	return 0.25 * sqrt((d1+d2+d3)*(d1+d2+d3)-2*(d1*d1+d2*d2+d3*d3));
+	//return 0.25 * sqrt((d1+d2+d3)*(d1+d2+d3)-2*(d1*d1+d2*d2+d3*d3));
+
+	//more stable way
+	// sort d1,d2,d3 as a >= b >= c
+	double a,b,c;
+	if (d1 > d2) { a = d1; b = d2; }
+	else { a = d2; b = d1; }
+	c = d3;
+	if (d3 > b) {
+	   c = b;
+	   b = d3;
+	   if (d3 > a) {
+	       b = a;
+	       a = d3;
+	   }
+	}
+
+	a = sqrt(a);
+	b = sqrt(b);
+	c = sqrt(c);
+
+    return 0.25 * sqrt((a+(b+c))*(c-(a-b))*(c+(a-b))*(a+(b-c)));
 }
+
 
 void HeronTriAreaGrad(double d1, double d2, double d3,
 	double& area, Vector3d& grad)
