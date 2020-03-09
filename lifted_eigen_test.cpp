@@ -369,10 +369,7 @@ double computeMinSignedArea(const MatrixXd& V, const MatrixXi& F)
 // Heron's formula and its derivatives
 double HeronTriArea(double d1, double d2, double d3)
 {
-	//return 0.25 * sqrt((d1+d2+d3)*(d1+d2+d3)-2*(d1*d1+d2*d2+d3*d3));
-
-	//more stable way
-	// sort d1,d2,d3 as a >= b >= c
+    // sort d1,d2,d3 as a >= b >= c
 	double a,b,c;
 	if (d1 > d2) { a = d1; b = d2; }
 	else { a = d2; b = d1; }
@@ -399,9 +396,7 @@ void HeronTriAreaGrad(double d1, double d2, double d3,
 {
 	area = HeronTriArea(d1,d2,d3);
 	double s = 1 / (16 * area);
-	// grad(0) = d2 + d3 - d1;
-	// grad(1) = d1 + d3 - d2;
-	// grad(2) = d1 + d2 - d3;
+	//ToDo: more robust (sort d1,d2,d3)
 	grad << d2+d3-d1, d1+d3-d2, d1+d2-d3;
 	grad *= s;
 }
@@ -462,23 +457,26 @@ void liftedTriAreaGrad(const MatrixXd& vert, const Vector3d& r,
 	double d2 = e2.squaredNorm() + r(1);
 	double d3 = e3.squaredNorm() + r(2);
 
-	Vector3d dAdD;
-	HeronTriAreaGrad(d1,d2,d3,area,dAdD);
+	//
+	double a = HeronTriArea(d1,d2,d3);
 
-	double g1,g2,g3;
-	g1 = dAdD(0);
-	g2 = dAdD(1);
-	g3 = dAdD(2);
+	//
+	double g1 = d2 + d3 - d1;
+	double g2 = d3 + d1 - d2;
+	double g3 = d1 + d2 - d3;
 
-	Matrix3d Lap;
-	Lap <<  g2+g3, -g3, -g2,
-			-g3, g1+g3, -g1,
-			-g2, -g1, g1+g2;
-	Lap *= 2.0;
+	//
+	auto ge1 = g1 * e1;
+	auto ge2 = g2 * e2;
+	auto ge3 = g3 * e3;
 
-	//note: grad has the same dimension as vert
-	grad.resize(vert.rows(),vert.cols());
-	grad = vert * Lap;
+    //note: grad has the same dimension as vert
+    grad.resize(vert.rows(),vert.cols());
+    grad.col(0) = ge3 - ge2;
+    grad.col(1) = ge1 - ge3;
+    grad.col(2) = ge2 - ge1;
+
+    grad /= (8*a);
 }
 
 void liftedTriAreaGradLaplacian(const MatrixXd& vert, const Vector3d& r,
@@ -494,22 +492,34 @@ void liftedTriAreaGradLaplacian(const MatrixXd& vert, const Vector3d& r,
 	double d2 = e2.squaredNorm() + r(1);
 	double d3 = e3.squaredNorm() + r(2);
 
-	Vector3d dAdD;
-	HeronTriAreaGrad(d1,d2,d3,area,dAdD);
+	//
+	double a = HeronTriArea(d1,d2,d3);
 
-	double g1,g2,g3;
-	g1 = dAdD(0);
-	g2 = dAdD(1);
-	g3 = dAdD(2);
+    //
+    double g1 = d2 + d3 - d1;
+    double g2 = d3 + d1 - d2;
+    double g3 = d1 + d2 - d3;
 
+    //
+    auto ge1 = g1 * e1;
+    auto ge2 = g2 * e2;
+    auto ge3 = g3 * e3;
+
+    //note: grad has the same dimension as vert
+    grad.resize(vert.rows(),vert.cols());
+    grad.col(0) = ge3 - ge2;
+    grad.col(1) = ge1 - ge3;
+    grad.col(2) = ge2 - ge1;
+
+    double div = 8*a;
+    grad /= div;
+
+    //
 	Lap <<  g2+g3, -g3, -g2,
 			-g3, g1+g3, -g1,
 			-g2, -g1, g1+g2;
-	Lap *= 2.0;
+	Lap /= div;
 
-	//note: grad has the same dimension as vert
-	grad.resize(vert.rows(),vert.cols());
-	grad = vert * Lap;
 }
 
 void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
