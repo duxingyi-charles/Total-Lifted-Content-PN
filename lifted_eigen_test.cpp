@@ -510,8 +510,7 @@ void liftedTriAreaGradLaplacian(const MatrixXd& vert, const Vector3d& r,
     grad.col(0) = ge3 - ge2;
     grad.col(1) = ge1 - ge3;
     grad.col(2) = ge2 - ge1;
-
-    double div = 8*a;
+    double div = 8 * a;
     grad /= div;
 
     //
@@ -535,73 +534,103 @@ void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
 	double d2 = e2.squaredNorm() + r(1);
 	double d3 = e3.squaredNorm() + r(2);
 
-	Vector3d dAdD;
-	Matrix3d hAhD;
-	HeronTriAreaGradHessian(d1,d2,d3,area,dAdD,hAhD);
+    int vDim = v1.size();
 
-	int vDim = v1.size();
+    //
+    double a = HeronTriArea(d1,d2,d3);
 
-	// dDdV
-	std::vector<std::vector<VectorXd> > dDdV(3);
-	for (int i = 0; i < 3; ++i)
-	{
-		dDdV[i].resize(3);
-		dDdV[i][i] = VectorXd::Zero(vDim);
-	}
-	dDdV[0][1] =  2.0 * e1; dDdV[0][2] = -2.0 * e1;
-	dDdV[1][0] = -2.0 * e2; dDdV[1][2] =  2.0 * e2;
-	dDdV[2][0] =  2.0 * e3; dDdV[2][1] = -2.0 * e3;
+    //
+    double g1 = d2 + d3 - d1;
+    double g2 = d3 + d1 - d2;
+    double g3 = d1 + d2 - d3;
 
-	// Hess 1
-	MatrixXd Hess1(3*vDim, 3*vDim);
-	for (int i = 0; i < 3; ++i)
-	{
-		for (int j = 0; j < 3; ++j)
-		{
-			MatrixXd Hij = MatrixXd::Zero(vDim,vDim);
-			for (int k = 0; k < 3; ++k)
-			{
-				VectorXd gkj = VectorXd::Zero(vDim);
-				for (int l = 0; l < 3; ++l)
-				{
-					gkj += (hAhD(k,l) * dDdV[l][j]);
-				}
-				Hij += dDdV[k][i] * gkj.transpose();
-			}
-			Hess1.block(i*vDim,j*vDim,vDim,vDim) = Hij;
-		}
-	}
+    //
+    auto ge1 = g1 * e1;
+    auto ge2 = g2 * e2;
+    auto ge3 = g3 * e3;
 
-	// Laplacian
-	double g1,g2,g3;
-	g1 = dAdD(0);
-	g2 = dAdD(1);
-	g3 = dAdD(2);
+    //
+	auto av1 = ge3 - ge2;
+	auto av2 = ge1 - ge3;
+	auto av3 = ge2 - ge1;
 
-	Matrix3d Lap;
-	Lap <<  g2+g3, -g3, -g2,
-			-g3, g1+g3, -g1,
-			-g2, -g1, g1+g2;
-	Lap *= 2.0;
+    //note: grad has the same dimension as vert
+    grad.resize(vert.rows(),vert.cols());
+    grad.col(0) = av1;
+    grad.col(1) = av2;
+    grad.col(2) = av3;
+    double div = 8 * a;
+    grad /= div;
 
-	//note: grad has the same dimension as vert
-	grad.resize(vert.rows(),vert.cols());
-	grad = vert * Lap;
+    // Hess 1: Laplacian
+    Matrix3d Lap;
+    Lap <<  g2+g3, -g3, -g2,
+            -g3, g1+g3, -g1,
+            -g2, -g1, g1+g2;
+    Lap /= div;
 
-	// Hess2
-	MatrixXd Hess2(3*vDim,3*vDim);
-	MatrixXd I = MatrixXd::Identity(vDim,vDim);
-	for (int i = 0; i < 3; ++i)
-	{
-		for (int j = 0; j < 3; ++j)
-		{
-			Hess2.block(i*vDim,j*vDim,vDim,vDim) = Lap(i,j) * I;
-		}
-	}
+    // Kronecker product
+    MatrixXd Hess1(3*vDim,3*vDim);
+    MatrixXd I = MatrixXd::Identity(vDim,vDim);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            Hess1.block(i*vDim,j*vDim,vDim,vDim) = Lap(i,j) * I;
+        }
+    }
 
-	//
-	Hess.resize(3*vDim,3*vDim);
-	Hess = Hess1 + Hess2;
+    // Hess 2
+    MatrixXd E11(vDim,vDim);
+    MatrixXd E22(vDim,vDim);
+    MatrixXd E33(vDim,vDim);
+    MatrixXd E13(vDim,vDim);
+    MatrixXd E12(vDim,vDim);
+    MatrixXd E231(vDim,vDim);
+    MatrixXd E312(vDim,vDim);
+
+    E11 = e1 * e1.transpose();
+    E12 = e1 * e2.transpose();
+    E13 = e1 * e3.transpose();
+    E22 = e2 * e2.transpose();
+    E33 = e3 * e3.transpose();
+    E231 = (e2 - e3) * e1.transpose();
+    E312 = (e3 - e1) * e2.transpose();
+
+    MatrixXd Hess2(3*vDim, 3*vDim);
+    Hess2.block(0,0,vDim,vDim) = E11;
+    Hess2.block(0,vDim,vDim,vDim) = E13 + E231;
+    Hess2.block(0,2*vDim,vDim,vDim) = E12 - E231;
+    Hess2.block(vDim,vDim,vDim,vDim) = E22;
+    Hess2.block(vDim,2*vDim,vDim,vDim) = E12.transpose() + E312;
+    Hess2.block(2*vDim,2*vDim,vDim,vDim) = E33;
+
+    Hess2.block(vDim,0,vDim,vDim) = Hess2.block(0,vDim,vDim,vDim).transpose();
+    Hess2.block(2*vDim,0,vDim,vDim) = Hess2.block(0,2*vDim,vDim,vDim).transpose();
+    Hess2.block(2*vDim,vDim,vDim,vDim) = Hess2.block(vDim,2*vDim,vDim,vDim).transpose();
+
+    div = 4 * a;
+    Hess2 /= div;
+
+    // Hess 3
+    MatrixXd Hess3(3*vDim, 3*vDim);
+    Hess3.block(0,0,vDim,vDim) = av1 * av1.transpose();
+    Hess3.block(0,vDim,vDim,vDim) = av1 * av2.transpose();
+    Hess3.block(0,2*vDim,vDim,vDim) = av1 * av3.transpose();
+    Hess3.block(vDim,vDim,vDim,vDim) = av2 * av2.transpose();
+    Hess3.block(vDim,2*vDim,vDim,vDim) = av2 * av3.transpose();
+    Hess3.block(2*vDim,2*vDim,vDim,vDim) = av3 * av3.transpose();
+
+    Hess3.block(vDim,0,vDim,vDim) = Hess3.block(0,vDim,vDim,vDim).transpose();
+    Hess3.block(2*vDim,0,vDim,vDim) = Hess3.block(0,2*vDim,vDim,vDim).transpose();
+    Hess3.block(2*vDim,vDim,vDim,vDim) = Hess3.block(vDim,2*vDim,vDim,vDim).transpose();
+
+    div = 64 * a * a * a;
+    Hess3 /= div;
+
+    // Hessian
+    Hess.resize(3*vDim,3*vDim);
+    Hess = Hess1 - Hess2 - Hess3;
 
 }
 
