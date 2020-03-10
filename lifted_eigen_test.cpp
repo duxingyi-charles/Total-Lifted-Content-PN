@@ -1247,6 +1247,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	}
 	if (record_searchDirection) searchDirectionRecord.push_back(p);
 
+
+
 	// backtracking line search
 	/*long double*/ double gp = 0.5 * grad.transpose() * p;
 //	std::cout << "gp: " << gp << std::endl;
@@ -1254,27 +1256,30 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	x_next = x + step_size * p;
 	energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
 
-	/*long double*/ double energy_diff = 0.0;
-	for (auto j=0; j < energyList.size(); ++j) {
-	    energy_diff += (energyList_next[j] - energyList[j]);
-	}
-//	std::cout  << energy_diff << "\t" << step_size * gp << std::endl;
+/////---
+//	/*long double*/ double energy_diff = 0.0;
+//	for (auto j=0; j < energyList.size(); ++j) {
+//	    energy_diff += (energyList_next[j] - energyList[j]);
+//	}
+////	std::cout  << energy_diff << "\t" << step_size * gp << std::endl;
+//
+////	while (energy_next > energy + step_size * gp)
+//    while (energy_diff > step_size * gp)
+////    while (energy_diff > 0)
+//    {
+//        step_size *= shrink;
+//        x_next = x + step_size * p;
+//        energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
+//
+//        energy_diff = 0.0;
+//        for (auto j=0; j < energyList.size(); ++j) {
+//            energy_diff += (energyList_next[j] - energyList[j]);
+//        }
+////        std::cout << energy_diff <<"\t" << step_size * gp  << std::endl;
+//    }
+////    std::cout << "final step size: " << step_size << std::endl;
+/////---
 
-//	while (energy_next > energy + step_size * gp)
-    while (energy_diff > step_size * gp)
-//    while (energy_diff > 0)
-    {
-        step_size *= shrink;
-        x_next = x + step_size * p;
-        energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
-
-        energy_diff = 0.0;
-        for (auto j=0; j < energyList.size(); ++j) {
-            energy_diff += (energyList_next[j] - energyList[j]);
-        }
-//        std::cout << energy_diff <<"\t" << step_size * gp  << std::endl;
-    }
-//    std::cout << "final step size: " << step_size << std::endl;
 	x = x_next;
 	//
 	if (record_stepSize) stepSizeRecord.push_back(step_size);
@@ -1320,25 +1325,27 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		x_next = x + step_size * p;
 		energy_next = formulation.getLiftedEnergy(x_next,energyList_next);
 
-		energy_diff = 0.0;
-        for (auto j=0; j < energyList.size(); ++j) {
-            energy_diff += (energyList_next[j] - energyList[j]);
-        }
-
-//		while (energy_next > energy + step_size * gp) {
-        while (energy_diff > step_size * gp)
-//        while (energy_diff > 0)
-        {
-			step_size *= shrink;
-			x_next = x + step_size * p;
-			energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
-
-            energy_diff = 0.0;
-            for (auto j=0; j < energyList.size(); ++j) {
-                energy_diff += (energyList_next[j] - energyList[j]);
-            }
-		}
-		//
+//		///---
+//		energy_diff = 0.0;
+//        for (auto j=0; j < energyList.size(); ++j) {
+//            energy_diff += (energyList_next[j] - energyList[j]);
+//        }
+//
+////		while (energy_next > energy + step_size * gp) {
+//        while (energy_diff > step_size * gp)
+////        while (energy_diff > 0)
+//        {
+//			step_size *= shrink;
+//			x_next = x + step_size * p;
+//			energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
+//
+//            energy_diff = 0.0;
+//            for (auto j=0; j < energyList.size(); ++j) {
+//                energy_diff += (energyList_next[j] - energyList[j]);
+//            }
+//		}
+//		//
+//		///---
 		x = x_next;
 		//
 		if (record_stepSize) stepSizeRecord.push_back(step_size);
@@ -1550,30 +1557,30 @@ int main(int argc, char const *argv[])
     std::cout.precision(std::numeric_limits< double >::max_digits10);
 
     //
-    double e;
-    std::vector<double> elist;
-    VectorXd g;
-    SpMat H;
-//    myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
-	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    for (int i = 0; i < 100; ++i) {
-        myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
-    }
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
-
-//    std::cout << "grad: " << std::endl;
-//    std::cout << g << std::endl;
-//    std::cout << "Hessian: " << std::endl;
-//    std::cout << H << std::endl;
+//    double e;
+//    std::vector<double> elist;
+//    VectorXd g;
+//    SpMat H;
+////    myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
+//	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+//    for (int i = 0; i < 1000; ++i) {
+//        myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
+//    }
+//    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+//	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
+//
+////    std::cout << "grad: " << std::endl;
+////    std::cout << g << std::endl;
+////    std::cout << "Hessian: " << std::endl;
+////    std::cout << H << std::endl;
     //
 
 	//projected newton
-//	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-//	projected_Newton(myLifted,x,options);
-//	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-//	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
-//
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+	projected_Newton(myLifted,x,options);
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
+
 	exportResult(resFile,myLifted,x,options);
 
 
