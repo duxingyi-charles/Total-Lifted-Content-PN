@@ -458,7 +458,7 @@ void liftedTriAreaGrad(const MatrixXd& vert, const Vector3d& r,
 	double d3 = e3.squaredNorm() + r(2);
 
 	//
-	double a = HeronTriArea(d1,d2,d3);
+	area = HeronTriArea(d1,d2,d3);
 
 	//
 	double g1 = d2 + d3 - d1;
@@ -476,7 +476,7 @@ void liftedTriAreaGrad(const MatrixXd& vert, const Vector3d& r,
     grad.col(1) = ge1 - ge3;
     grad.col(2) = ge2 - ge1;
 
-    grad /= (8*a);
+    grad /= (8 * area);
 }
 
 void liftedTriAreaGradLaplacian(const MatrixXd& vert, const Vector3d& r,
@@ -493,7 +493,7 @@ void liftedTriAreaGradLaplacian(const MatrixXd& vert, const Vector3d& r,
 	double d3 = e3.squaredNorm() + r(2);
 
 	//
-	double a = HeronTriArea(d1,d2,d3);
+	area = HeronTriArea(d1,d2,d3);
 
     //
     double g1 = d2 + d3 - d1;
@@ -510,7 +510,7 @@ void liftedTriAreaGradLaplacian(const MatrixXd& vert, const Vector3d& r,
     grad.col(0) = ge3 - ge2;
     grad.col(1) = ge1 - ge3;
     grad.col(2) = ge2 - ge1;
-    double div = 8 * a;
+    double div = 8 * area;
     grad /= div;
 
     //
@@ -537,7 +537,7 @@ void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
     int vDim = v1.size();
 
     //
-    double a = HeronTriArea(d1,d2,d3);
+    area = HeronTriArea(d1,d2,d3);
 
     //
     double g1 = d2 + d3 - d1;
@@ -559,7 +559,7 @@ void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
     grad.col(0) = av1;
     grad.col(1) = av2;
     grad.col(2) = av3;
-    double div = 8 * a;
+    double div = 8 * area;
     grad /= div;
 
     // Hess 1: Laplacian
@@ -609,7 +609,7 @@ void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
     Hess2.block(2*vDim,0,vDim,vDim) = Hess2.block(0,2*vDim,vDim,vDim).transpose();
     Hess2.block(2*vDim,vDim,vDim,vDim) = Hess2.block(vDim,2*vDim,vDim,vDim).transpose();
 
-    div = 4 * a;
+    div = 4 * area;
     Hess2 /= div;
 
     // Hess 3
@@ -625,7 +625,7 @@ void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
     Hess3.block(2*vDim,0,vDim,vDim) = Hess3.block(0,2*vDim,vDim,vDim).transpose();
     Hess3.block(2*vDim,vDim,vDim,vDim) = Hess3.block(vDim,2*vDim,vDim,vDim).transpose();
 
-    div = 64 * a * a * a;
+    div = 64 * area * area * area;
     Hess3 /= div;
 
     // Hessian
@@ -902,8 +902,98 @@ public:
 
 	}
 
-//	void getLiftedEnergyGradHessian(const VectorXd& x, double& energy, VectorXd& grad, SpMat& Hess)
-    void getLiftedEnergyGradHessian(const VectorXd& x, /*long double*/ double& energy, std::vector</*long double*/ double>& energyList, VectorXd& grad, SpMat& Hess)
+    void getLiftedEnergyGradHessian(const VectorXd& x, double& energy, std::vector<double>& energyList, VectorXd& grad, SpMat& Hess)
+    {
+        // update V
+        for (auto i = 0; i < freeI.size(); ++i)
+        {
+            for (int j = 0; j < vDim; ++j)
+            {
+                V(j,freeI(i)) = x[i*vDim + j];
+            }
+        }
+
+        // compute energy, gradient and Hessian
+        energy = 0.0;
+        energyList.resize(F.cols());
+
+        MatrixXd fullGrad = MatrixXd::Zero(V.rows(),V.cols());
+
+        std::vector<eigenT> tripletList(3*3*vDim*vDim*F.cols());
+
+
+#pragma omp parallel
+#pragma omp for
+        for (auto i = 0; i < F.cols(); ++i)
+        {
+            // cout << "face " << i << ": " << std::endl;
+            int i1,i2,i3;
+            i1 = F(0,i);
+            i2 = F(1,i);
+            i3 = F(2,i);
+
+            MatrixXd vert(vDim,3);
+            vert.col(0) = V.col(i1);
+            vert.col(1) = V.col(i2);
+            vert.col(2) = V.col(i3);
+            Vector3d r = restD.col(i);
+
+            double f;
+            MatrixXd g;
+            MatrixXd hess;
+            liftedTriAreaGradHessian(vert,r,f,g,hess);
+            energyList[i] = f;
+
+#pragma omp critical
+            {
+                fullGrad.col(i1) += g.col(0);
+                fullGrad.col(i2) += g.col(1);
+                fullGrad.col(i3) += g.col(2);
+            }
+
+            int current_index = i*3*3*vDim*vDim;
+            Vector3i indices = F_free.col(i);
+            for (int j = 0; j < 3; ++j) {
+                int idx_j = indices(j);
+                for (int k = 0; k < 3; ++k) {
+                    int idx_k = indices(k);
+                    if (idx_j != -1 && idx_k != -1) {
+                        for (int l = 0; l < vDim; ++l) {
+                            for (int n = 0; n < vDim; ++n) {
+                                tripletList[current_index] = eigenT(idx_j * vDim + l, idx_k * vDim + n,
+                                                                    hess(j * vDim + l, k * vDim + n));
+                                ++current_index;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // get total energy
+        for (double i : energyList)
+        {
+            energy += i;
+        }
+
+        // get free gradient
+        grad.resize(x.size());
+        for (auto i = 0; i < freeI.size(); ++i)
+        {
+            for (int j = 0; j < vDim; ++j)
+            {
+                grad(i*vDim + j) = fullGrad(j,freeI(i));
+            }
+        }
+
+        // get free Hessian
+        Hess.resize(vDim * freeI.size(), vDim * freeI.size());
+        Hess.setFromTriplets(tripletList.begin(), tripletList.end());
+    }
+
+
+    //	void getLiftedEnergyGradProjectedHessian(const VectorXd& x, double& energy, VectorXd& grad, SpMat& Hess)
+    void getLiftedEnergyGradProjectedHessian(const VectorXd& x, /*long double*/ double& energy, std::vector</*long double*/ double>& energyList, VectorXd& grad, SpMat& Hess)
     {
 		// update V
 		for (auto i = 0; i < freeI.size(); ++i)
@@ -1053,7 +1143,6 @@ public:
 
 
 
-
 void Laplacian_precondition_gradient_descent(LiftedFormulation& formulation, VectorXd& x, int maxIter)
 {
 	double energy;
@@ -1170,7 +1259,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	std::vector</*long double*/ double> energyList_next;
 
 	//first iter: initialize solver
-	formulation.getLiftedEnergyGradHessian(x,energy,energyList,grad,mat);
+	formulation.getLiftedEnergyGradProjectedHessian(x,energy,energyList,grad,mat);
 
 	// solver step monitor
 	if (record_vert) vertRecord.push_back(formulation.V);
@@ -1242,7 +1331,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 	for (int i = 1; i < maxIter; ++i)
 	{
-		formulation.getLiftedEnergyGradHessian(x,energy,energyList,grad,mat);
+		formulation.getLiftedEnergyGradProjectedHessian(x,energy,energyList,grad,mat);
 
 		// solver step monitor
 		if (record_vert) vertRecord.push_back(formulation.V);
@@ -1500,15 +1589,27 @@ int main(int argc, char const *argv[])
 	LiftedFormulation myLifted(restV,initV,F,handles,form,alpha);
 	VectorXd x = myLifted.x0;
 
-    // dubug
+    // debug
     std::cout.precision(std::numeric_limits< double >::max_digits10);
 
-	//projected newton
-	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-	projected_Newton(myLifted,x,options);
-	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
+    //
+    double e;
+    std::vector<double> elist;
+    VectorXd g;
+    SpMat H;
+    myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
+    std::cout << "grad: " << std::endl;
+    std::cout << g << std::endl;
+    std::cout << "Hessian: " << std::endl;
+    std::cout << H << std::endl;
+    //
 
+	//projected newton
+//	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+//	projected_Newton(myLifted,x,options);
+//	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+//	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
+//
 	exportResult(resFile,myLifted,x,options);
 
 
