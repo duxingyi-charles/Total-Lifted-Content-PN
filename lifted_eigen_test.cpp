@@ -1298,30 +1298,27 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	x_next = x + step_size * p;
 	energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
 
-/////---
-//	/*long double*/ double energy_diff = 0.0;
-//	for (auto j=0; j < energyList.size(); ++j) {
-//	    energy_diff += (energyList_next[j] - energyList[j]);
-//	}
-////	std::cout  << energy_diff << "\t" << step_size * gp << std::endl;
-//
-////	while (energy_next > energy + step_size * gp)
-//    while (energy_diff > step_size * gp)
-////    while (energy_diff > 0)
-//    {
-//        step_size *= shrink;
-//        x_next = x + step_size * p;
-//        energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
-//
-//        energy_diff = 0.0;
-//        for (auto j=0; j < energyList.size(); ++j) {
-//            energy_diff += (energyList_next[j] - energyList[j]);
-//        }
-////        std::cout << energy_diff <<"\t" << step_size * gp  << std::endl;
-//    }
-////    std::cout << "final step size: " << step_size << std::endl;
-/////---
+	/*long double*/ double energy_diff = 0.0;
+	for (auto j=0; j < energyList.size(); ++j) {
+	    energy_diff += (energyList_next[j] - energyList[j]);
+	}
+//	std::cout  << energy_diff << "\t" << step_size * gp << std::endl;
 
+//	while (energy_next > energy + step_size * gp)
+    while (energy_diff > step_size * gp)
+//    while (energy_diff > 0)
+    {
+        step_size *= shrink;
+        x_next = x + step_size * p;
+        energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
+
+        energy_diff = 0.0;
+        for (auto j=0; j < energyList.size(); ++j) {
+            energy_diff += (energyList_next[j] - energyList[j]);
+        }
+//        std::cout << energy_diff <<"\t" << step_size * gp  << std::endl;
+    }
+//    std::cout << "final step size: " << step_size << std::endl;
 	x = x_next;
 	//
 	if (record_stepSize) stepSizeRecord.push_back(step_size);
@@ -1367,27 +1364,25 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		x_next = x + step_size * p;
 		energy_next = formulation.getLiftedEnergy(x_next,energyList_next);
 
-//		///---
-//		energy_diff = 0.0;
-//        for (auto j=0; j < energyList.size(); ++j) {
-//            energy_diff += (energyList_next[j] - energyList[j]);
-//        }
-//
-////		while (energy_next > energy + step_size * gp) {
-//        while (energy_diff > step_size * gp)
-////        while (energy_diff > 0)
-//        {
-//			step_size *= shrink;
-//			x_next = x + step_size * p;
-//			energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
-//
-//            energy_diff = 0.0;
-//            for (auto j=0; j < energyList.size(); ++j) {
-//                energy_diff += (energyList_next[j] - energyList[j]);
-//            }
-//		}
-//		//
-//		///---
+		energy_diff = 0.0;
+        for (auto j=0; j < energyList.size(); ++j) {
+            energy_diff += (energyList_next[j] - energyList[j]);
+        }
+
+//		while (energy_next > energy + step_size * gp) {
+        while (energy_diff > step_size * gp)
+//        while (energy_diff > 0)
+        {
+			step_size *= shrink;
+			x_next = x + step_size * p;
+			energy_next = formulation.getLiftedEnergy(x_next, energyList_next);
+
+            energy_diff = 0.0;
+            for (auto j=0; j < energyList.size(); ++j) {
+                energy_diff += (energyList_next[j] - energyList[j]);
+            }
+		}
+		//
 		x = x_next;
 		//
 		if (record_stepSize) stepSizeRecord.push_back(step_size);
