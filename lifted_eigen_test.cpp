@@ -922,8 +922,8 @@ public:
         std::vector<eigenT> tripletList(3*3*vDim*vDim*F.cols());
 
 
-#pragma omp parallel
-#pragma omp for
+//#pragma omp parallel
+//#pragma omp for
         for (auto i = 0; i < F.cols(); ++i)
         {
             // cout << "face " << i << ": " << std::endl;
@@ -944,12 +944,12 @@ public:
             liftedTriAreaGradHessian(vert,r,f,g,hess);
             energyList[i] = f;
 
-#pragma omp critical
-            {
+//#pragma omp critical
+//            {
                 fullGrad.col(i1) += g.col(0);
                 fullGrad.col(i2) += g.col(1);
                 fullGrad.col(i3) += g.col(2);
-            }
+//            }
 
             int current_index = i*3*3*vDim*vDim;
             Vector3i indices = F_free.col(i);
@@ -1139,6 +1139,7 @@ public:
 	}
 
 };
+
 
 
 
@@ -1597,11 +1598,18 @@ int main(int argc, char const *argv[])
     std::vector<double> elist;
     VectorXd g;
     SpMat H;
-    myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
-    std::cout << "grad: " << std::endl;
-    std::cout << g << std::endl;
-    std::cout << "Hessian: " << std::endl;
-    std::cout << H << std::endl;
+//    myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    for (int i = 0; i < 1000; ++i) {
+        myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
+    }
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
+
+//    std::cout << "grad: " << std::endl;
+//    std::cout << g << std::endl;
+//    std::cout << "Hessian: " << std::endl;
+//    std::cout << H << std::endl;
     //
 
 	//projected newton
