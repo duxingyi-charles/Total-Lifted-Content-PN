@@ -1549,12 +1549,31 @@ int main(int argc, char const *argv[])
     // debug
     std::cout.precision(std::numeric_limits< double >::max_digits10);
 
-	//projected newton
+    //
+    double e;
+    std::vector<double> elist;
+    VectorXd g;
+    SpMat H;
+//    myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-	projected_Newton(myLifted,x,options);
-	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    for (int i = 0; i < 100; ++i) {
+        myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
+    }
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
 
+//    std::cout << "grad: " << std::endl;
+//    std::cout << g << std::endl;
+//    std::cout << "Hessian: " << std::endl;
+//    std::cout << H << std::endl;
+    //
+
+	//projected newton
+//	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+//	projected_Newton(myLifted,x,options);
+//	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+//	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
+//
 	exportResult(resFile,myLifted,x,options);
 
 
