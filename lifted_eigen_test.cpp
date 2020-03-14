@@ -476,7 +476,8 @@ void liftedTriAreaGrad(const MatrixXd& vert, const Vector3d& r,
     grad.col(1) = ge1 - ge3;
     grad.col(2) = ge2 - ge1;
 
-    grad /= (8 * area);
+    double s = 1 / (8 * area);
+    grad *= s;
 }
 
 void liftedTriAreaGradLaplacian(const MatrixXd& vert, const Vector3d& r,
@@ -510,14 +511,14 @@ void liftedTriAreaGradLaplacian(const MatrixXd& vert, const Vector3d& r,
     grad.col(0) = ge3 - ge2;
     grad.col(1) = ge1 - ge3;
     grad.col(2) = ge2 - ge1;
-    double div = 8 * area;
-    grad /= div;
+    double s = 1/ (8 * area);
+    grad *= s;
 
     //
 	Lap <<  g2+g3, -g3, -g2,
 			-g3, g1+g3, -g1,
 			-g2, -g1, g1+g2;
-	Lap /= div;
+	Lap *= s;
 
 }
 
@@ -559,15 +560,15 @@ void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
     grad.col(0) = av1;
     grad.col(1) = av2;
     grad.col(2) = av3;
-    double div = 8 * area;
-    grad /= div;
+    double s = 1/ (8 * area);
+    grad *= s;
 
     // Hess 1: Laplacian
     Matrix3d Lap;
     Lap <<  g2+g3, -g3, -g2,
             -g3, g1+g3, -g1,
             -g2, -g1, g1+g2;
-    Lap /= div;
+    Lap *= s;
 
     // Kronecker product
     MatrixXd Hess1(3*vDim,3*vDim);
@@ -609,8 +610,8 @@ void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
     Hess2.block(2*vDim,0,vDim,vDim) = Hess2.block(0,2*vDim,vDim,vDim).transpose();
     Hess2.block(2*vDim,vDim,vDim,vDim) = Hess2.block(vDim,2*vDim,vDim,vDim).transpose();
 
-    div = 4 * area;
-    Hess2 /= div;
+    s *= 2; // 1/4area
+    Hess2 *= s;
 
     // Hess 3
     MatrixXd Hess3(3*vDim, 3*vDim);
@@ -625,8 +626,8 @@ void liftedTriAreaGradHessian(const MatrixXd& vert, const Vector3d& r,
     Hess3.block(2*vDim,0,vDim,vDim) = Hess3.block(0,2*vDim,vDim,vDim).transpose();
     Hess3.block(2*vDim,vDim,vDim,vDim) = Hess3.block(vDim,2*vDim,vDim,vDim).transpose();
 
-    div = 64 * area * area * area;
-    Hess3 /= div;
+    s = s*s / (4*area);  // 1/64area^3
+    Hess3 *= s;
 
     // Hessian
     Hess.resize(3*vDim,3*vDim);
