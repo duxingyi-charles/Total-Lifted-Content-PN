@@ -417,8 +417,7 @@ void HeronTriAreaGradHessian(double d1, double d2, double d3,
 		}
 	}
 
-	s *= -16; // -1/area
-	Hess *= s;
+	Hess /= (-area);
 
 	Matrix3d t;
 	t << -1.0,  1.0,  1.0,
