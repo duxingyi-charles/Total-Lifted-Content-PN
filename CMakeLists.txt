@@ -6,8 +6,9 @@ add_executable(lifted_exe lifted_eigen_test.cpp)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SUITESPARSE_INCLUDE_DIR "/usr/local/include" CACHE STRING "Suitesparse include directory")
-set(SUITESPARSE_LIB_DIR "/usr/local/lib" CACHE STRING "Suitesparse library directory")
+set(SUITESPARSE_INCLUDE_DIR /usr/local/include CACHE PATH "suitesparse include directory")
+set(SUITESPARSE_LIB_DIR /usr/local/lib CACHE PATH "suitesparse library directory")
+
 
 target_include_directories(lifted_exe PUBLIC /usr/local/include)
 target_include_directories(lifted_exe PUBLIC "${SUITESPARSE_INCLUDE_DIR}")
