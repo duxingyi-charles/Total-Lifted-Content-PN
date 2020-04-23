@@ -411,7 +411,7 @@ double HeronTriArea(double d1, double d2, double d3)
 	b = sqrt(b);
 	c = sqrt(c);
 
-	return 0.25 * sqrt((a + (b + c)) * (c - (a - b)) * (c + (a - b)) * (a + (b - c)));
+	return 0.25 * sqrt(abs((a + (b + c)) * (c - (a - b)) * (c + (a - b)) * (a + (b - c))));
 }
 
 
