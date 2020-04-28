@@ -1247,7 +1247,8 @@ public:
 					step_size * (c2 +
 						step_size * (c3 +
 							step_size * c4)));
-			energyList_next = energyList_next.array().sqrt();
+			//energyList_next = energyList_next.array().sqrt();
+			energyList_next = energyList_next.array().abs().sqrt();
 			
 			energy_diff_list = energyList_next - energyList;
 			energy_diff = energy_diff_list.sum();
