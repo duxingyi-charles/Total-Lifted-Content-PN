@@ -112,14 +112,16 @@ public:
 		ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
 		maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 		/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
-		record_gradient(false), record_searchDirection(false), record_stepSize(false)
+		record_gradient(false), record_gradientNorm(false), record_searchDirection(false), 
+		record_searchNorm(false), record_stepSize(false), record_stepNorm(false)
 	{};
 	//import options from file
 	SolverOptionManager(const char* filename) :
 		ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
 		maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 		/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
-		record_gradient(false), record_searchDirection(false), record_stepSize(false)
+		record_gradient(false), record_gradientNorm(false), record_searchDirection(false),
+		record_searchNorm(false), record_stepSize(false), record_stepNorm(false)
 	{
 		if (!importOptions(filename))
 		{
@@ -144,14 +146,20 @@ public:
 	bool record_energy;
 	bool record_minArea;
 	bool record_gradient;
+	bool record_gradientNorm;
 	bool record_searchDirection;
+	bool record_searchNorm;
 	bool record_stepSize;
+	bool record_stepNorm;  // ||x_next - x||
 	std::vector<MatrixXd> vertRecord;
 	std::vector<double> energyRecord;
 	std::vector<double> minAreaRecord;
 	std::vector<VectorXd> gradientRecord;
+	std::vector<double> gradientNormRecord;
 	std::vector<VectorXd> searchDirectionRecord;
+	std::vector<double> searchNormRecord;
 	std::vector<double> stepSizeRecord;
+	std::vector<double> stepNormRecord;
 
 
 
@@ -166,12 +174,15 @@ public:
 		std::cout << "algorithm:\t" << algorithm << "\n";
 		std::cout << "stopCode:\t" << stopCode << "\n";
 		std::cout << "record:  \t" << "{ ";
-		if (record_vert)    std::cout << "vert ";
-		if (record_energy)  std::cout << "energy ";
-		if (record_minArea) std::cout << "minArea ";
-		if (record_gradient) std::cout << "gradient ";
+		if (record_vert)			std::cout << "vert ";
+		if (record_energy)			std::cout << "energy ";
+		if (record_minArea)			std::cout << "minArea ";
+		if (record_gradient)		std::cout << "gradient ";
+		if (record_gradientNorm)	std::cout << "gNorm ";
 		if (record_searchDirection) std::cout << "searchDirection ";
-		if (record_stepSize)	std::cout << "stepSize ";
+		if (record_searchNorm)		std::cout << "searchNorm ";
+		if (record_stepSize)		std::cout << "stepSize ";
+		if (record_stepNorm)		std::cout << "stepNorm ";
 		std::cout << "}" << std::endl;
 
 
@@ -287,13 +298,25 @@ public:
 				{
 					record_gradient = true;
 				}
+				if (cur_record == "gNorm")
+				{
+					record_gradientNorm = true;
+				}
 				if (cur_record == "searchDirection")
 				{
 					record_searchDirection = true;
 				}
+				if (cur_record == "searchNorm")
+				{
+					record_searchNorm = true;
+				}
 				if (cur_record == "stepSize")
 				{
 					record_stepSize = true;
+				}
+				if (cur_record == "stepNorm")
+				{
+					record_stepNorm = true;
 				}
 			}
 
@@ -412,7 +435,7 @@ double HeronTriArea(double d1, double d2, double d3)
 	b = sqrt(b);
 	c = sqrt(c);
 
-	return 0.25 * sqrt((a + (b + c)) * (c - (a - b)) * (c + (a - b)) * (a + (b - c)));
+	return 0.25 * sqrt(abs((a + (b + c)) * (c - (a - b)) * (c + (a - b)) * (a + (b - c))));
 }
 
 
@@ -1248,7 +1271,8 @@ public:
 					step_size * (c2 +
 						step_size * (c3 +
 							step_size * c4)));
-			energyList_next = energyList_next.array().sqrt();
+			//energyList_next = energyList_next.array().sqrt();
+			energyList_next = energyList_next.array().abs().sqrt();
 			
 			energy_diff_list = energyList_next - energyList;
 			energy_diff = energy_diff_list.sum();
@@ -1352,6 +1376,14 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		gradientRecord.resize(0);
 	}
 	//
+	bool record_gradientNorm = false;
+	std::vector<double>& gradientNormRecord = options.gradientNormRecord;
+	if (options.record_gradientNorm)
+	{
+		record_gradientNorm = true;
+		gradientNormRecord.resize(0);
+	}
+	//
 	bool record_searchDirection = false;
 	std::vector<VectorXd>& searchDirectionRecord = options.searchDirectionRecord;
 	if (options.record_searchDirection)
@@ -1360,12 +1392,28 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		searchDirectionRecord.resize(0);
 	}
 	//
+	bool record_searchNorm = false;
+	std::vector<double>& searchNormRecord = options.searchNormRecord;
+	if (options.record_searchNorm)
+	{
+		record_searchNorm = true;
+		searchNormRecord.resize(0);
+	}
+	//
 	bool record_stepSize = false;
 	std::vector<double>& stepSizeRecord = options.stepSizeRecord;
 	if (options.record_stepSize)
 	{
 		record_stepSize = true;
 		stepSizeRecord.resize(0);
+	}
+	//
+	bool record_stepNorm = false;
+	std::vector<double>& stepNormRecord = options.stepNormRecord;
+	if (options.record_stepNorm)
+	{
+		record_stepNorm = true;
+		stepNormRecord.resize(0);
 	}
 	//handle options end
 
@@ -1384,6 +1432,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 	if (record_vert) vertRecord.push_back(formulation.V);
 	if (record_energy) energyRecord.push_back(energy);
 	if (record_gradient) gradientRecord.push_back(grad);
+	if (record_gradientNorm) gradientNormRecord.push_back(grad.norm());
 	if (record_minArea || stopCode == "all_good") {
 		double minA = computeMinSignedArea(formulation.V, formulation.F);
 		if (record_minArea) minAreaRecord.push_back(minA);
@@ -1410,12 +1459,14 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		return;
 	}
 	if (record_searchDirection) searchDirectionRecord.push_back(p);
+	if (record_searchNorm) searchNormRecord.push_back(p.norm());
 
 	// backtracking line search
 	double step_size = 1.0;
 	formulation.lineSearch2(x, p, step_size, grad, energy, energyList, energy_next, shrink, 0.5);
 	//
 	if (record_stepSize) stepSizeRecord.push_back(step_size);
+	if (record_stepNorm) stepNormRecord.push_back(p.norm() * step_size);
 	//check ftol
 	if (fabs(energy_next - energy) < ftol_abs) return;
 	if (fabs((energy_next - energy) / energy) < ftol_rel) return;
@@ -1429,6 +1480,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		if (record_vert) vertRecord.push_back(formulation.V);
 		if (record_energy) energyRecord.push_back(energy);
 		if (record_gradient) gradientRecord.push_back(grad);
+		if (record_gradientNorm) gradientNormRecord.push_back(grad.norm());
 		if (record_minArea || stopCode == "all_good") {
 			double minA = computeMinSignedArea(formulation.V, formulation.F);
 			if (record_minArea) minAreaRecord.push_back(minA);
@@ -1450,6 +1502,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 			return;
 		}
 		if (record_searchDirection) searchDirectionRecord.push_back(p);
+		if (record_searchNorm) searchNormRecord.push_back(p.norm());
 
 		// backtracking line search
 		double step_size = 1.0;
@@ -1457,6 +1510,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 		//
 		if (record_stepSize) stepSizeRecord.push_back(step_size);
+		if (record_stepNorm) stepNormRecord.push_back(p.norm() * step_size);
 		//check ftol
 		if (fabs(energy_next - energy) < ftol_abs) return;
 		if (fabs((energy_next - energy) / energy) < ftol_rel) return;
@@ -1557,6 +1611,18 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		out_file << std::endl;
 	}
 
+	if (options.record_gradientNorm)
+	{
+		const std::vector<double>& gradientNormRecord = options.gradientNormRecord;
+		unsigned n_record = gradientNormRecord.size();
+		out_file << "gNorm " << n_record << std::endl;
+		for (auto i = 0; i < n_record; ++i)
+		{
+			out_file << gradientNormRecord[i] << " ";
+		}
+		out_file << std::endl;
+	}
+
 	if (options.record_searchDirection)
 	{
 		const std::vector<VectorXd>& searchDirectionRecord = options.searchDirectionRecord;
@@ -1576,6 +1642,18 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		out_file << std::endl;
 	}
 
+	if (options.record_searchNorm)
+	{
+		const std::vector<double>& searchNormRecord = options.searchNormRecord;
+		unsigned n_record = searchNormRecord.size();
+		out_file << "searchNorm " << n_record << std::endl;
+		for (auto i = 0; i < n_record; ++i)
+		{
+			out_file << searchNormRecord[i] << " ";
+		}
+		out_file << std::endl;
+	}
+
 	if (options.record_stepSize)
 	{
 		const std::vector<double>& stepSizeRecord = options.stepSizeRecord;
@@ -1584,6 +1662,18 @@ bool exportResult(const char* filename, LiftedFormulation& formulation, const Ve
 		for (auto i = 0; i < n_record; ++i)
 		{
 			out_file << stepSizeRecord[i] << " ";
+		}
+		out_file << std::endl;
+	}
+
+	if (options.record_stepNorm)
+	{
+		const std::vector<double>& stepNormRecord = options.stepNormRecord;
+		unsigned n_record = stepNormRecord.size();
+		out_file << "stepNorm " << n_record << std::endl;
+		for (auto i = 0; i < n_record; ++i)
+		{
+			out_file << stepNormRecord[i] << " ";
 		}
 		out_file << std::endl;
 	}
