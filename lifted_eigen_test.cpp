@@ -112,7 +112,8 @@ public:
 		maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 		/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
 		record_gradient(false), record_gradientNorm(false), record_searchDirection(false), 
-		record_searchNorm(false), record_stepSize(false), record_stepNorm(false)
+		record_searchNorm(false), record_stepSize(false), record_stepNorm(false),
+		save_vert(false)
 	{};
 	//import options from file
 	SolverOptionManager(const char* filename) :
@@ -120,7 +121,8 @@ public:
 		maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 		/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
 		record_gradient(false), record_gradientNorm(false), record_searchDirection(false),
-		record_searchNorm(false), record_stepSize(false), record_stepNorm(false)
+		record_searchNorm(false), record_stepSize(false), record_stepNorm(false),
+		save_vert(false)
 	{
 		if (!importOptions(filename))
 		{
@@ -160,6 +162,9 @@ public:
 	std::vector<double> stepSizeRecord;
 	std::vector<double> stepNormRecord;
 
+	//save values
+	bool save_vert;
+
 
 
 	void printOptions()
@@ -183,8 +188,10 @@ public:
 		if (record_stepSize)		std::cout << "stepSize ";
 		if (record_stepNorm)		std::cout << "stepNorm ";
 		std::cout << "}" << std::endl;
-
-
+		//
+		std::cout << "save:  \t" << "{ ";
+		if (save_vert)              std::cout << "vert ";
+		std::cout << "}" << std::endl;
 	}
 
 	bool importOptions(const char* filename)
@@ -267,57 +274,187 @@ public:
 			}
 			in_file >> stopCode;
 
+			// record values
 			in_file >> optName;
 			if (optName != "record")
 			{
 				normal = 8;
 				break;
 			}
-			size_t n;
-			in_file >> n;
-			std::string cur_record;
-			//record.resize(n);
-			for (size_t i = 0; i < n; ++i)
-			{
-				//in_file >> record[i];
-				in_file >> cur_record;
-				if (cur_record == "vert")
-				{
-					record_vert = true;
-				}
-				if (cur_record == "energy")
-				{
-					record_energy = true;
-				}
-				if (cur_record == "minArea")
-				{
-					record_minArea = true;
-				}
-				if (cur_record == "gradient")
-				{
-					record_gradient = true;
-				}
-				if (cur_record == "gNorm")
-				{
-					record_gradientNorm = true;
-				}
-				if (cur_record == "searchDirection")
-				{
-					record_searchDirection = true;
-				}
-				if (cur_record == "searchNorm")
-				{
-					record_searchNorm = true;
-				}
-				if (cur_record == "stepSize")
-				{
-					record_stepSize = true;
-				}
-				if (cur_record == "stepNorm")
-				{
-					record_stepNorm = true;
-				}
-			}
+
+            in_file >> optName;
+            if (optName != "vert")
+            {
+                normal = 9;
+                break;
+            }
+            int selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                record_vert = true;
+            }
+
+            in_file >> optName;
+            if (optName != "energy")
+            {
+                normal = 10;
+                break;
+            }
+            selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                record_energy = true;
+            }
+
+            in_file >> optName;
+            if (optName != "minArea")
+            {
+                normal = 11;
+                break;
+            }
+            selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                record_minArea = true;
+            }
+
+            in_file >> optName;
+            if (optName != "gradient")
+            {
+                normal = 12;
+                break;
+            }
+            selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                record_gradient = true;
+            }
+
+            in_file >> optName;
+            if (optName != "gNorm")
+            {
+                normal = 13;
+                break;
+            }
+            selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                record_gradientNorm = true;
+            }
+
+            in_file >> optName;
+            if (optName != "searchDirection")
+            {
+                normal = 14;
+                break;
+            }
+            selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                record_searchDirection = true;
+            }
+
+            in_file >> optName;
+            if (optName != "searchNorm")
+            {
+                normal = 15;
+                break;
+            }
+            selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                record_searchNorm = true;
+            }
+
+            in_file >> optName;
+            if (optName != "stepSize")
+            {
+                normal = 16;
+                break;
+            }
+            selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                record_stepSize = true;
+            }
+
+            in_file >> optName;
+            if (optName != "stepNorm")
+            {
+                normal = 17;
+                break;
+            }
+            selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                record_stepNorm = true;
+            }
+
+            // save values
+            in_file >> optName;
+            if (optName != "save")
+            {
+                normal = 18;
+                break;
+            }
+
+            in_file >> optName;
+            if (optName != "vert")
+            {
+                normal = 19;
+                break;
+            }
+            selected = 0;
+            in_file >> selected;
+            if (selected > 0) {
+                save_vert = true;
+            }
+
+//			size_t n;
+//			in_file >> n;
+//			std::string cur_record;
+//			//record.resize(n);
+//			for (size_t i = 0; i < n; ++i)
+//			{
+//				//in_file >> record[i];
+//				in_file >> cur_record;
+//				if (cur_record == "vert")
+//				{
+//					record_vert = true;
+//				}
+//				if (cur_record == "energy")
+//				{
+//					record_energy = true;
+//				}
+//				if (cur_record == "minArea")
+//				{
+//					record_minArea = true;
+//				}
+//				if (cur_record == "gradient")
+//				{
+//					record_gradient = true;
+//				}
+//				if (cur_record == "gNorm")
+//				{
+//					record_gradientNorm = true;
+//				}
+//				if (cur_record == "searchDirection")
+//				{
+//					record_searchDirection = true;
+//				}
+//				if (cur_record == "searchNorm")
+//				{
+//					record_searchNorm = true;
+//				}
+//				if (cur_record == "stepSize")
+//				{
+//					record_stepSize = true;
+//				}
+//				if (cur_record == "stepNorm")
+//				{
+//					record_stepNorm = true;
+//				}
+//			}
 
 			break;
 		}
