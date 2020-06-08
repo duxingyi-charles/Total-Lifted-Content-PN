@@ -113,18 +113,18 @@ public:
 		/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
 		record_gradient(false), record_gradientNorm(false), record_searchDirection(false), 
 		record_searchNorm(false), record_stepSize(false), record_stepNorm(false),
-		save_vert(false)
+		save_vert(false),resFile("")
 	{};
 	//import options from file
-	SolverOptionManager(const char* filename) :
+	SolverOptionManager(const char* option_filename, const char* result_filename) :
 		ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
 		maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 		/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
 		record_gradient(false), record_gradientNorm(false), record_searchDirection(false),
 		record_searchNorm(false), record_stepSize(false), record_stepNorm(false),
-		save_vert(false)
+		save_vert(false), resFile(result_filename)
 	{
-		if (!importOptions(filename))
+		if (!importOptions(option_filename))
 		{
 			std::cout << "SolverOptionManager Warn: default options are used." << std::endl;
 		}
@@ -163,6 +163,7 @@ public:
 	std::vector<double> stepNormRecord;
 
 	//save values
+	std::string resFile;
 	bool save_vert;
 
 
@@ -189,6 +190,7 @@ public:
 		if (record_stepNorm)		std::cout << "stepNorm ";
 		std::cout << "}" << std::endl;
 		//
+		std::cout << "result file: \t" << resFile << std::endl;
 		std::cout << "save:  \t" << "{ ";
 		if (save_vert)              std::cout << "vert ";
 		std::cout << "}" << std::endl;
@@ -1879,7 +1881,7 @@ int main(int argc, char const* argv[])
 	}
 
 	//import options
-	SolverOptionManager options(optFile);
+	SolverOptionManager options(optFile,resFile);
 
 	//
 	LiftedFormulation myLifted(restV, initV, F, handles, form, alpha);
@@ -1887,25 +1889,6 @@ int main(int argc, char const* argv[])
 
 	// debug
 	std::cout.precision(std::numeric_limits< double >::max_digits10);
-
-	//
-//    double e;
-//    std::vector<double> elist;
-//    VectorXd g;
-//    SpMat H;
-////    myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
-//	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-//    for (int i = 0; i < 1000; ++i) {
-//        myLifted.getLiftedEnergyGradHessian(x,e,elist,g,H);
-//    }
-//    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-//	std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " [microseconds]" << std::endl;
-//
-////    std::cout << "grad: " << std::endl;
-////    std::cout << g << std::endl;
-////    std::cout << "Hessian: " << std::endl;
-////    std::cout << H << std::endl;
-	//
 
 	//projected newton
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();

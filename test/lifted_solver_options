@@ -15,4 +15,14 @@ maxeval
 stopCode
 none
 record
-0
+vert 			1
+energy 			1
+minArea 		1
+gradient 		0
+gNorm 			0
+searchDirection 0
+searchNorm		1
+stepSize		0
+stepNorm		0
+save
+vert			0
