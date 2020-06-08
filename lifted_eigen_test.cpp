@@ -24,6 +24,30 @@ typedef Eigen::Triplet<double> eigenT;
 
 typedef Eigen::CholmodSupernodalLLT<SpMat> CholmodSolver;
 
+// export Eigen Matrix
+bool exportMatrix(std::string filename, const MatrixXd& mat)
+{
+    std::ofstream out_file(filename);
+    if (!out_file.is_open()) {
+        std::cerr << "Failed to open " << filename << "!" << std::endl;
+        return false;
+    }
+
+    //precision of output
+    typedef std::numeric_limits< double > dbl;
+    out_file.precision(dbl::max_digits10);
+    //
+    for (auto i = 0; i < mat.cols(); ++i) {
+        for (auto j = 0; j < mat.rows(); ++j) {
+            out_file << mat(j, i) << " ";
+        }
+        out_file << std::endl;
+    }
+    //
+    out_file.close();
+    return true;
+}
+
 bool importData(const char* filename,
 	std::vector<std::vector<double> >& restV,
 	std::vector<std::vector<double> >& initV,
@@ -1553,6 +1577,8 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 		record_stepNorm = true;
 		stepNormRecord.resize(0);
 	}
+	//
+	bool save_vert = options.save_vert;
 	//handle options end
 
 	//
@@ -1568,6 +1594,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 	// solver step monitor
 	if (record_vert) vertRecord.push_back(formulation.V);
+	if (save_vert) exportMatrix(options.resFile+"_vert_iter0", formulation.V);
 	if (record_energy) energyRecord.push_back(energy);
 	if (record_gradient) gradientRecord.push_back(grad);
 	if (record_gradientNorm) gradientNormRecord.push_back(grad.norm());
@@ -1616,6 +1643,7 @@ void projected_Newton(LiftedFormulation& formulation, VectorXd& x, SolverOptionM
 
 		// solver step monitor
 		if (record_vert) vertRecord.push_back(formulation.V);
+        if (save_vert) exportMatrix(options.resFile+"_vert_iter"+std::to_string(i), formulation.V);
 		if (record_energy) energyRecord.push_back(energy);
 		if (record_gradient) gradientRecord.push_back(grad);
 		if (record_gradientNorm) gradientNormRecord.push_back(grad.norm());
@@ -1886,9 +1914,6 @@ int main(int argc, char const* argv[])
 	//
 	LiftedFormulation myLifted(restV, initV, F, handles, form, alpha);
 	VectorXd x = myLifted.x0;
-
-	// debug
-	std::cout.precision(std::numeric_limits< double >::max_digits10);
 
 	//projected newton
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
