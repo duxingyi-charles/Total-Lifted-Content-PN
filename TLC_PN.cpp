@@ -1770,9 +1770,9 @@ bool exportResult(const char *filename, LiftedFormulation &formulation, const Ve
 
 
 int main(int argc, char const *argv[]) {
-    const char *dataFile = (argc > 1) ? argv[1] : "./test/lifted";
-    const char *optFile = (argc > 2) ? argv[2] : "./test/lifted_solver_options";
-    const char *resFile = (argc > 3) ? argv[3] : "./test/lifted_res";
+    const char *dataFile = (argc > 1) ? argv[1] : "./input";
+    const char *optFile = (argc > 2) ? argv[2] : "./solver_options";
+    const char *resFile = (argc > 3) ? argv[3] : "./result";
 
     //import data
     std::vector<std::vector<double> > raw_restV;
