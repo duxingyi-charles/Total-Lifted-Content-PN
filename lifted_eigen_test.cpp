@@ -24,6 +24,37 @@ typedef Eigen::Triplet<double> eigenT;
 
 typedef Eigen::CholmodSupernodalLLT<SpMat> CholmodSolver;
 
+// Eigen Utils
+
+// convert c++ matrix to Eigen matrix
+template <typename Scalar >
+Matrix<Scalar,Dynamic,Dynamic> toEigenMatrix(const std::vector<std::vector<Scalar> >& mat)
+{
+    int ncol = mat.size();
+    int nrow = mat[0].size();
+    Matrix<Scalar,Dynamic,Dynamic> m(nrow, ncol);
+    for (int i = 0; i < ncol; ++i)
+    {
+        for (int j = 0; j < nrow; ++j)
+        {
+            m(j, i) = mat[i][j];
+        }
+    }
+    return m;
+}
+
+// convert c++ vector to Eigen vector
+template <typename Scalar >
+Matrix<Scalar,Dynamic,1> toEigenVector(const std::vector<Scalar>& vec)
+{
+    int size = vec.size();
+    Matrix<Scalar,Dynamic,1> v(size);
+    for (int i = 0; i < size; ++i) {
+        v(i) = vec[i];
+    }
+    return v;
+}
+
 // export Eigen Matrix
 bool exportMatrix(std::string filename, const MatrixXd& mat)
 {
@@ -51,8 +82,8 @@ bool exportMatrix(std::string filename, const MatrixXd& mat)
 bool importData(const char* filename,
 	std::vector<std::vector<double> >& restV,
 	std::vector<std::vector<double> >& initV,
-	std::vector<std::vector<unsigned> >& F,
-	std::vector<unsigned>& handles,
+	std::vector<std::vector<int> >& F,
+	std::vector<int>& handles,
 	std::string& form,
 	double& alpha)
 {
@@ -97,7 +128,7 @@ bool importData(const char* filename,
 	F.resize(n);
 	for (size_t i = 0; i < n; ++i)
 	{
-		std::vector<unsigned> v(simplexSize);
+		std::vector<int> v(simplexSize);
 		for (size_t j = 0; j < simplexSize; ++j)
 		{
 			in_file >> v[j];
@@ -110,7 +141,7 @@ bool importData(const char* filename,
 	handles.resize(n);
 	for (size_t i = 0; i < n; ++i)
 	{
-		unsigned v;
+		int v;
 		in_file >> v;
 		handles[i] = v;
 	}
@@ -1257,7 +1288,7 @@ public:
 			// else if (signed_area > 0.0) hess -= signedHess;
 
 			// policy 5
-			hess -= signedHess;
+//			hess -= signedHess;
 
 
 			Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(hess);
@@ -1815,8 +1846,8 @@ int main(int argc, char const* argv[])
 	//import data
 	std::vector<std::vector<double> > raw_restV;
 	std::vector<std::vector<double> > raw_initV;
-	std::vector<std::vector<unsigned> > raw_F;
-	std::vector<unsigned> raw_handles;
+	std::vector<std::vector<int> > raw_F;
+	std::vector<int> raw_handles;
 	std::string form;
 	double alpha;
 
@@ -1825,44 +1856,10 @@ int main(int argc, char const* argv[])
 	std::cout << "alpha: " << alpha << std::endl;
 
 	//convert raw data to Eigen data
-	const int nv = raw_restV.size();
-	const int restDim = raw_restV[0].size();
-	const int nf = raw_F.size();
-	const int simplexSize = raw_F[1].size();
-	const int initDim = raw_initV[0].size();
-
-	MatrixXd restV(restDim, nv);
-	for (int i = 0; i < nv; ++i)
-	{
-		for (int j = 0; j < restDim; ++j)
-		{
-			restV(j, i) = raw_restV[i][j];
-		}
-	}
-
-	MatrixXd initV(initDim, nv);
-	for (int i = 0; i < nv; ++i)
-	{
-		for (int j = 0; j < initDim; ++j)
-		{
-			initV(j, i) = raw_initV[i][j];
-		}
-	}
-
-	MatrixXi F(simplexSize, nf);
-	for (int i = 0; i < nf; ++i)
-	{
-		for (int j = 0; j < simplexSize; ++j)
-		{
-			F(j, i) = raw_F[i][j];
-		}
-	}
-
-	VectorXi handles(raw_handles.size());
-	for (auto i = 0; i < raw_handles.size(); ++i)
-	{
-		handles(i) = raw_handles[i];
-	}
+	MatrixXd restV   = toEigenMatrix(raw_restV);
+    MatrixXd initV   = toEigenMatrix(raw_initV);
+    MatrixXi F       = toEigenMatrix(raw_F);
+    VectorXi handles = toEigenVector(raw_handles);
 
 	//import options
 	SolverOptionManager options(optFile,resFile);
