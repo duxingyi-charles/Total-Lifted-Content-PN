@@ -1,21 +1,20 @@
 cmake_minimum_required(VERSION 3.15.0)
 
-project(Lifted VERSION 0.1.0 LANGUAGES CXX)
+project(TLC_PN VERSION 0.1.0 LANGUAGES CXX)
 
-add_executable(lifted_exe lifted_eigen_test.cpp)
+add_executable(findInjective_PN TLC_PN.cpp)
 
 set(CMAKE_CXX_STANDARD 11)
 
 set(SUITESPARSE_INCLUDE_DIR /usr/local/include CACHE PATH "suitesparse include directory")
 set(SUITESPARSE_LIB_DIR /usr/local/lib CACHE PATH "suitesparse library directory")
 
-
-target_include_directories(lifted_exe PUBLIC /usr/local/include)
-target_include_directories(lifted_exe PUBLIC "${SUITESPARSE_INCLUDE_DIR}")
+target_include_directories(findInjective_PN PUBLIC /usr/local/include)
+target_include_directories(findInjective_PN PUBLIC "${SUITESPARSE_INCLUDE_DIR}")
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
-    target_link_libraries(lifted_exe PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(findInjective_PN PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-target_link_libraries(lifted_exe PUBLIC -L/usr/local/lib -L"${SUITESPARSE_LIB_DIR}" cholmod)
+target_link_libraries(findInjective_PN PUBLIC -L/usr/local/lib -L"${SUITESPARSE_LIB_DIR}" cholmod)
