@@ -83,9 +83,7 @@ bool importData(const char* filename,
 	std::vector<std::vector<double> >& restV,
 	std::vector<std::vector<double> >& initV,
 	std::vector<std::vector<int> >& F,
-	std::vector<int>& handles,
-	std::string& form,
-	double& alpha)
+	std::vector<int>& handles)
 {
 	std::ifstream in_file(filename);
 
@@ -146,12 +144,6 @@ bool importData(const char* filename,
 		handles[i] = v;
 	}
 
-	//form
-	in_file >> form;
-
-	//alpha
-	in_file >> alpha;
-
 	in_file.close();
 
 	return true;
@@ -163,6 +155,7 @@ class SolverOptionManager
 public:
 	//default options
 	SolverOptionManager() :
+	    form("Tutte"), alphaRatio(1e-6), alpha(1e-6),
 		ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
 		maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 		/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
@@ -172,6 +165,7 @@ public:
 	{};
 	//import options from file
 	SolverOptionManager(const char* option_filename, const char* result_filename) :
+	    form("Tutte"), alphaRatio(1e-6), alpha(1e-6),
 		ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
 		maxeval(1000), algorithm("ProjectedNewton"), stopCode("none"),
 		/*record()*/ record_vert(false), record_energy(false), record_minArea(false),
@@ -187,7 +181,13 @@ public:
 
 	~SolverOptionManager() = default;
 
-	double ftol_abs;
+    // energy formulation options
+    std::string form;
+    double alphaRatio;
+    double alpha;
+
+    // optimization options
+    double ftol_abs;
 	double ftol_rel;
 	double xtol_abs;
 	double xtol_rel;
@@ -196,8 +196,7 @@ public:
 	std::string algorithm;
 	std::string stopCode;
 
-
-	//std::vector<std::string> record;
+	//record values
 	bool record_vert;
 	bool record_energy;
 	bool record_minArea;
@@ -225,6 +224,9 @@ public:
 
 	void printOptions()
 	{
+        std::cout << "form:\t" << form << "\n";
+        std::cout << "alphaRatio:\t" << alphaRatio << "\n";
+        std::cout << "alpha:\t"      << alpha      << "\n";
 		std::cout << "ftol_abs:\t" << ftol_abs << "\n";
 		std::cout << "ftol_rel:\t" << ftol_rel << "\n";
 		std::cout << "xtol_abs:\t" << xtol_abs << "\n";
@@ -267,10 +269,34 @@ public:
 		std::string optName;
 		while (true)
 		{
+            in_file >> optName;
+            if (optName != "form")
+            {
+                normal = 1;
+                break;
+            }
+            in_file >> form;
+
+            in_file >> optName;
+            if (optName != "alphaRatio")
+            {
+                normal = 2;
+                break;
+            }
+            in_file >> alphaRatio;
+
+            in_file >> optName;
+            if (optName != "alpha")
+            {
+                normal = 3;
+                break;
+            }
+            in_file >> alpha;
+
 			in_file >> optName;
 			if (optName != "ftol_abs")
 			{
-				normal = 1;
+				normal = 4;
 				break;
 			}
 			in_file >> ftol_abs;
@@ -278,7 +304,7 @@ public:
 			in_file >> optName;
 			if (optName != "ftol_rel")
 			{
-				normal = 2;
+				normal = 5;
 				break;
 			}
 			in_file >> ftol_rel;
@@ -286,7 +312,7 @@ public:
 			in_file >> optName;
 			if (optName != "xtol_abs")
 			{
-				normal = 3;
+				normal = 6;
 				break;
 			}
 			in_file >> xtol_abs;
@@ -294,7 +320,7 @@ public:
 			in_file >> optName;
 			if (optName != "xtol_rel")
 			{
-				normal = 4;
+				normal = 7;
 				break;
 			}
 			in_file >> xtol_rel;
@@ -302,7 +328,7 @@ public:
 			in_file >> optName;
 			if (optName != "gtol_abs")
 			{
-				normal = 100;
+				normal = 8;
 				break;
 			}
 			in_file >> gtol_abs;
@@ -310,7 +336,7 @@ public:
 			in_file >> optName;
 			if (optName != "algorithm")
 			{
-				normal = 5;
+				normal = 9;
 				break;
 			}
 			in_file >> algorithm;
@@ -318,7 +344,7 @@ public:
 			in_file >> optName;
 			if (optName != "maxeval")
 			{
-				normal = 6;
+				normal = 10;
 				break;
 			}
 			in_file >> maxeval;
@@ -326,7 +352,7 @@ public:
 			in_file >> optName;
 			if (optName != "stopCode")
 			{
-				normal = 7;
+				normal = 11;
 				break;
 			}
 			in_file >> stopCode;
@@ -335,14 +361,14 @@ public:
 			in_file >> optName;
 			if (optName != "record")
 			{
-				normal = 8;
+				normal = 12;
 				break;
 			}
 
             in_file >> optName;
             if (optName != "vert")
             {
-                normal = 9;
+                normal = 13;
                 break;
             }
             int selected = 0;
@@ -354,7 +380,7 @@ public:
             in_file >> optName;
             if (optName != "energy")
             {
-                normal = 10;
+                normal = 14;
                 break;
             }
             selected = 0;
@@ -366,7 +392,7 @@ public:
             in_file >> optName;
             if (optName != "minArea")
             {
-                normal = 11;
+                normal = 15;
                 break;
             }
             selected = 0;
@@ -378,7 +404,7 @@ public:
             in_file >> optName;
             if (optName != "gradient")
             {
-                normal = 12;
+                normal = 16;
                 break;
             }
             selected = 0;
@@ -390,7 +416,7 @@ public:
             in_file >> optName;
             if (optName != "gNorm")
             {
-                normal = 13;
+                normal = 17;
                 break;
             }
             selected = 0;
@@ -402,7 +428,7 @@ public:
             in_file >> optName;
             if (optName != "searchDirection")
             {
-                normal = 14;
+                normal = 18;
                 break;
             }
             selected = 0;
@@ -414,7 +440,7 @@ public:
             in_file >> optName;
             if (optName != "searchNorm")
             {
-                normal = 15;
+                normal = 19;
                 break;
             }
             selected = 0;
@@ -426,7 +452,7 @@ public:
             in_file >> optName;
             if (optName != "stepSize")
             {
-                normal = 16;
+                normal = 20;
                 break;
             }
             selected = 0;
@@ -438,7 +464,7 @@ public:
             in_file >> optName;
             if (optName != "stepNorm")
             {
-                normal = 17;
+                normal = 21;
                 break;
             }
             selected = 0;
@@ -451,14 +477,14 @@ public:
             in_file >> optName;
             if (optName != "save")
             {
-                normal = 18;
+                normal = 22;
                 break;
             }
 
             in_file >> optName;
             if (optName != "vert")
             {
-                normal = 19;
+                normal = 23;
                 break;
             }
             selected = 0;
@@ -466,8 +492,6 @@ public:
             if (selected > 0) {
                 save_vert = true;
             }
-
-
 
 			break;
 		}
@@ -539,6 +563,13 @@ double computeMinSignedArea(const MatrixXd& V, const MatrixXi& F)
 	return areaList.minCoeff();
 }
 
+double computeTotalSignedArea(const MatrixXd& V, const MatrixXi& F)
+{
+    VectorXd areaList;
+    computeSignedArea(V, F, areaList);
+    return areaList.sum();
+}
+
 // Heron's formula and its derivatives
 double squaredHeronTriArea(double d1, double d2, double d3)
 {
@@ -585,6 +616,20 @@ double HeronTriArea(double d1, double d2, double d3)
 	c = sqrt(c);
 
 	return 0.25 * sqrt(abs((a + (b + c)) * (c - (a - b)) * (c + (a - b)) * (a + (b - c))));
+}
+
+double totalHeronTriArea(const MatrixXd& V, const MatrixXi& F)
+{
+    int nF = F.cols();
+    MatrixXd D(3,nF);
+    computeSquaredEdgeLength(V,F,D);
+
+    // compute triangle areas
+    double area = 0;
+    for (int i = 0; i < nF; ++i) {
+        area += HeronTriArea(D(0,i), D(1,i), D(2,i));
+    }
+    return area;
 }
 
 
@@ -877,7 +922,7 @@ class LiftedFormulation
 {
 public:
 	LiftedFormulation(MatrixXd& restV, MatrixXd& initV, MatrixXi& restF,
-		VectorXi& handles, const std::string& form, double alpha) :
+		VectorXi& handles, const std::string& form, double alphaRatio, double alpha) :
 		V(initV), F(restF)
 	{
 		// compute freeI
@@ -918,14 +963,24 @@ public:
 			}
 		}
 
+        // compute alpha if it's not explicitly given
+        double alphaFinal;
+        if (alpha >=0) alphaFinal = alpha;
+        else {  //alpha < 0. Deduce alpha from alphaRatio
+            alphaFinal = computeAlpha(restV,initV,F,form,alphaRatio);
+        }
+        std::cout << "alphaRatio: " << alphaRatio << std::endl;
+        std::cout << "alpha: " << alphaFinal << std::endl;
+
 		// compute restD
-		double a = alpha; //for triangle mesh
+//		double a = alpha; //for triangle mesh
+        double a = alphaFinal;
 		if (form == "harmonic")
 		{
 			computeSquaredEdgeLength(restV, F, restD);
 			restD *= a;
 		}
-		else // tutte-uniform form
+		else // Tutte form
 		{
 			restD = MatrixXd::Constant(3, F.cols(), a);
 		}
@@ -956,6 +1011,28 @@ public:
 
 	VectorXd x0;  // initial variable vector
 	MatrixXd V;   // current V of target mesh
+
+    // compute alpha from alphaRatio
+    static double computeAlpha(const MatrixXd &restV,
+                               const MatrixXd &initV,
+                               const MatrixXi &Faces,
+                               std::string form, double alphaRatio)
+    {
+        unsigned nF = Faces.cols();
+        double rest_measure = 0;
+        double init_measure = 0;
+        // tri
+            init_measure = computeTotalSignedArea(initV,Faces);
+            if (form == "harmonic") {
+                rest_measure = totalHeronTriArea(restV,Faces);
+            }
+            else { // Tutte form
+                rest_measure = nF * sqrt(3) / 4;
+            }
+
+        // alpha
+        return alphaRatio * init_measure / rest_measure;
+    }
 
 
 	// x = Flatten(freeV)
@@ -1848,12 +1925,14 @@ int main(int argc, char const* argv[])
 	std::vector<std::vector<double> > raw_initV;
 	std::vector<std::vector<int> > raw_F;
 	std::vector<int> raw_handles;
-	std::string form;
-	double alpha;
 
-	importData(dataFile, raw_restV, raw_initV, raw_F, raw_handles, form, alpha);
 
-	std::cout << "alpha: " << alpha << std::endl;
+//	importData(dataFile, raw_restV, raw_initV, raw_F, raw_handles, form, alpha);
+    bool succeed = importData(dataFile, raw_restV, raw_initV, raw_F, raw_handles);
+    if (!succeed) {
+        std::cout << "usage: findInjective_PN [inputFile] [solverOptionsFile] [resultFile]" << std::endl;
+        return -1;
+    }
 
 	//convert raw data to Eigen data
 	MatrixXd restV   = toEigenMatrix(raw_restV);
@@ -1864,8 +1943,9 @@ int main(int argc, char const* argv[])
 	//import options
 	SolverOptionManager options(optFile,resFile);
 
-	//
-	LiftedFormulation myLifted(restV, initV, F, handles, form, alpha);
+    //
+//	LiftedFormulation myLifted(restV, initV, F, handles, form, alpha);
+    LiftedFormulation myLifted(restV, initV, F, handles, options.form, options.alphaRatio, options.alpha);
 	VectorXd x = myLifted.x0;
 
 	//projected newton
