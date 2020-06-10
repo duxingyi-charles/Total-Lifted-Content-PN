@@ -13,9 +13,9 @@ Projected_Newton
 maxeval
 1000
 stopCode
-none
+all_good
 record
-vert 			1
+vert 			0
 energy 			1
 minArea 		1
 gradient 		0
