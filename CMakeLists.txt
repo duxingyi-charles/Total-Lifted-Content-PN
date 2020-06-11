@@ -1,10 +1,9 @@
 cmake_minimum_required(VERSION 3.15.0)
-
 project(TLC_PN VERSION 0.1.0 LANGUAGES CXX)
 
-add_executable(findInjective_PN TLC_PN.cpp)
-
 set(CMAKE_CXX_STANDARD 11)
+
+add_executable(findInjective_PN TLC_PN.cpp)
 
 set(SUITESPARSE_INCLUDE_DIR /usr/local/include CACHE PATH "suitesparse include directory")
 set(SUITESPARSE_LIB_DIR /usr/local/lib CACHE PATH "suitesparse library directory")
