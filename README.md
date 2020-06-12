@@ -1,7 +1,6 @@
 # TLC-PN
 
 [`Project Page`](https://duxingyi-charles.github.io/publication/lifting-simplices-to-find-injectivity/)
-
 [`Dataset`](https://github.com/duxingyi-charles/Locally-Injective-Mappings-Benchmark)
 
 
