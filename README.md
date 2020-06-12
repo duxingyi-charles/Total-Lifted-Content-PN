@@ -75,11 +75,11 @@ _Input file_ contains vertices and faces(triangles/tetrahedrons) information abo
  
  See `example/input` for a concrete example.
  
- **It's possible to use your own mesh formats.** See [here](https://github.com/duxingyi-charles/lifting_simplices_to_find_injectivity#input_file) for the instructions to use. 
+ **It's possible to use your own mesh formats.** See [here](https://github.com/duxingyi-charles/lifting_simplices_to_find_injectivity#input_file) for the instructions. 
  
 ### solver_options_file
 
-_Solver options file_ contains parameters for TLC energy, options for NLopt solver, and a list of intermediate status to record during optimization.
+_Solver options file_ contains parameters for TLC energy, options for optimization, and a list of intermediate status to record during optimization.
 
 
     form
