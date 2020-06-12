@@ -105,12 +105,12 @@ _Solver options file_ contains parameters for TLC energy, options for optimizati
     stopCode
     [none OR all_good]
     record
-    vert            [0 OR 1]
-    energy          [0 OR 1]
-    minArea         [0 OR 1]
+    vert                    [0 OR 1]
+    energy                  [0 OR 1]
+    minArea                 [0 OR 1]
     gradient 		[0 OR 1]
     gNorm 			[0 OR 1]
-    searchDirection [0 OR 1]
+    searchDirection         [0 OR 1]
     searchNorm		[0 OR 1]
     stepSize		[0 OR 1]
     stepNorm		[0 OR 1]
