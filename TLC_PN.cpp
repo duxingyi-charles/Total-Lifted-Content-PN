@@ -1219,15 +1219,15 @@ public:
 
         std::vector<eigenT> tripletList(3 * 3 * vDim * vDim * F.cols());
 
-        // triangle-wise Hessian of signed area
-        // this is used later in the PSD projection step
-        MatrixXd signedHess(3 * 2, 3 * 2);
-        signedHess << 0.0, 0.0, 0.0, 0.5, 0.0, -0.5,
-                0.0, 0.0, -0.5, 0.0, 0.5, 0.0,
-                0.0, -0.5, 0.0, 0.0, 0.0, 0.5,
-                0.5, 0.0, 0.0, 0.0, -0.5, 0.0,
-                0.0, 0.5, 0.0, -0.5, 0.0, 0.0,
-                -0.5, 0.0, 0.5, 0.0, 0.0, 0.0;
+//        // triangle-wise Hessian of signed area
+//        // this is used later in the PSD projection step
+//        MatrixXd signedHess(3 * 2, 3 * 2);
+//        signedHess << 0.0, 0.0, 0.0, 0.5, 0.0, -0.5,
+//                0.0, 0.0, -0.5, 0.0, 0.5, 0.0,
+//                0.0, -0.5, 0.0, 0.0, 0.0, 0.5,
+//                0.5, 0.0, 0.0, 0.0, -0.5, 0.0,
+//                0.0, 0.5, 0.0, -0.5, 0.0, 0.0,
+//                -0.5, 0.0, 0.5, 0.0, 0.0, 0.0;
 
         //
 
@@ -1259,22 +1259,6 @@ public:
             }
 
             //project hess to PSD
-
-            // modify Hessian before PSD projection
-
-
-            // policy 1
-//			 double signed_area = tri_signed_area(vert.col(0),vert.col(1),vert.col(2));
-//			 if (signed_area > 0.0) hess -= signedHess;
-
-            // policy 3
-            // double signed_area = tri_signed_area(vert.col(0),vert.col(1),vert.col(2));
-            // if (signed_area < 0.0) hess += signedHess;
-            // else if (signed_area > 0.0) hess -= signedHess;
-
-            // policy 5
-//			hess -= signedHess;
-
 
             Eigen::SelfAdjointEigenSolver<MatrixXd> eigenSolver(hess);
             VectorXd eigenVals = eigenSolver.eigenvalues();
