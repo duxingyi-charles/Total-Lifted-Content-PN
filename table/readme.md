@@ -1,3 +1,24 @@
-|   | rest mesh | init mesh | total negative area | TLC++ | TLC++ |
-|---|-----------|-----------|---------------------|-------|-------|
-|   |           |           | ![](figure/eg1_sumNeg.png) |   ![](figure/eg1_subLift_1.png)    |   ![](figure/eg1_subLift_2.png)    |
+/ /rest mesh/init mesh/result/
+/-/-/-/-/
+/synthMesh/![](figure/synthMesh/rest.png)/![](figure/synthMesh/init.png)/![](figure/synthMesh/result.png)/
+/eg1/![](figure/eg1/rest.png)/![](figure/eg1/init.png)/![](figure/eg1/result.png)/
+/eg2/![](figure/eg2/rest.png)/![](figure/eg2/init.png)/![](figure/eg2/result.png)/
+/eg3/![](figure/eg3/rest.png)/![](figure/eg3/init.png)/![](figure/eg3/result.png)/
+/eg4/![](figure/eg4/rest.png)/![](figure/eg4/init.png)/![](figure/eg4/result.png)/
+/eg5/![](figure/eg5/rest.png)/![](figure/eg5/init.png)/![](figure/eg5/result.png)/
+/eg6/![](figure/eg6/rest.png)/![](figure/eg6/init.png)/![](figure/eg6/result.png)/
+/eg7/![](figure/eg7/rest.png)/![](figure/eg7/init.png)/![](figure/eg7/result.png)/
+/eg8/![](figure/eg8/rest.png)/![](figure/eg8/init.png)/![](figure/eg8/result.png)/
+/eg9/![](figure/eg9/rest.png)/![](figure/eg9/init.png)/![](figure/eg9/result.png)/
+/eg10/![](figure/eg10/rest.png)/![](figure/eg10/init.png)/![](figure/eg10/result.png)/
+/eg11/![](figure/eg11/rest.png)/![](figure/eg11/init.png)/![](figure/eg11/result.png)/
+/eg12/![](figure/eg12/rest.png)/![](figure/eg12/init.png)/![](figure/eg12/result.png)/
+/eg13/![](figure/eg13/rest.png)/![](figure/eg13/init.png)/![](figure/eg13/result.png)/
+/eg14/![](figure/eg14/rest.png)/![](figure/eg14/init.png)/![](figure/eg14/result.png)/
+/multi2d1n1/![](figure/multi2d1n1/rest.png)/![](figure/multi2d1n1/init.png)/![](figure/multi2d1n1/result.png)/
+/multi2d1n3/![](figure/multi2d1n3/rest.png)/![](figure/multi2d1n3/init.png)/![](figure/multi2d1n3/result.png)/
+/plane2/![](figure/plane2/rest.png)/![](figure/plane2/init.png)/![](figure/plane2/result.png)/
+/plane/![](figure/plane/rest.png)/![](figure/plane/init.png)/![](figure/plane/result.png)/
+/plane3/![](figure/plane3/rest.png)/![](figure/plane3/init.png)/![](figure/plane3/result.png)/
+/woodyS/![](figure/woodyS/rest.png)/![](figure/woodyS/init.png)/![](figure/woodyS/result.png)/
+/woodyS02/![](figure/woodyS02/rest.png)/![](figure/woodyS02/init.png)/![](figure/woodyS02/result.png)/
