@@ -1574,7 +1574,7 @@ void projected_Newton(LiftedFormulation &formulation, VectorXd &x, SolverOptionM
 
     // backtracking line search
     double step_size = 1.0;
-    formulation.lineSearch2(x, p, step_size, grad, energy, energyList, energy_next, shrink, 0.5);
+    formulation.lineSearch2(x, p, step_size, grad, energy, energyList, energy_next, shrink, 1e-4);
     //
     if (record_stepSize) stepSizeRecord.push_back(step_size);
     if (record_stepNorm) stepNormRecord.push_back(p.norm() * step_size);
@@ -1617,7 +1617,7 @@ void projected_Newton(LiftedFormulation &formulation, VectorXd &x, SolverOptionM
 
         // backtracking line search
         double step_size = 1.0;
-        formulation.lineSearch2(x, p, step_size, grad, energy, energyList, energy_next, shrink, 0.5);
+        formulation.lineSearch2(x, p, step_size, grad, energy, energyList, energy_next, shrink, 1e-4);
 
         //
         if (record_stepSize) stepSizeRecord.push_back(step_size);
