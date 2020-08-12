@@ -119,6 +119,12 @@ _Solver options file_ contains parameters for TLC energy, options for optimizati
     save
     vert			[0 OR 1]
  
+ The following table explains each option in details.
+ We **recommend** using the default values (especially "form", "alphaRatio" and "alpha") as they are most successful in our experiments. 
+ 
+ See `example\solver_options` for a concrete example.
+
+ 
  |                        | possible values  | default value    | explanation                                                                                                                    |
  |------------------------|------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------|
  | form                   | harmonic, Tutte  | Tutte            | two forms of TLC energy (see paper for details)                                                                                |
@@ -130,7 +136,7 @@ _Solver options file_ contains parameters for TLC energy, options for optimizati
  | xtol_rel               | (-inf, inf)      | 1e-8             | Relative variable change stop threshold. Negative value means disabled.                                                        |
  | gtol_abs               | (-inf, inf)      | 1e-8             | Gradient norm stop thereshold. Negative value means disabled.                                                                  |
  | algorithm              | Projected_Newton | Projected_Newton | Projected Newton method.                                                                                                       |
- | maxeval                | positive integer | 1000             | max number of iteration stop threshold.                                                                                        |
+ | maxeval                | positive integer | 10000            | max number of iteration stop threshold.                                                                                        |
  | stopCode               | none, all_good   | all_good         | Custom stop criteria. "all_good": optimization will stop when there is no inverted elements.                                   |
  | record:vert            | 0, 1             | 0                | 1: record target mesh vertices at each iteration.                                                                              |
  | record:energy          | 0, 1             | 0                | 1: record TLC energy at each iteration.                                                                                        |
@@ -142,7 +148,6 @@ _Solver options file_ contains parameters for TLC energy, options for optimizati
  | record:stepNorm        | 0, 1             | 0                | 1: record norm of (x<sub>next</sub>-x) at each iteration.                                                                                |
  | save:vert              | 0, 1             | 0                | 1: At each iteration, save target mesh vertices at the current iteration to a separate file.                                   |
    
-   See `example\solver_options` for a concrete example.
 
 ### result_file
 
