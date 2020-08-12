@@ -75,9 +75,10 @@ _Input file_ contains vertices and faces(triangles/tetrahedrons) information abo
  
  See `example/input` for a concrete example.
  
- **Important:** Since TLC aims at constrained embedding problem, it is necessary to provide indices of boundary vertices as handles in the `input_file`.
+:bell: **Important:** Since TLC aims at constrained embedding problem, it is necessary to provide indices of boundary vertices as handles in the `input_file`. 
+ See [here](https://github.com/duxingyi-charles/lifting_simplices_to_find_injectivity#input_file) for a script to extract boundary vertices from an input mesh.
  
- **It's possible to use your own mesh formats.** See [here](https://github.com/duxingyi-charles/lifting_simplices_to_find_injectivity#input_file) for the instructions. 
+:tada: **It's possible to use your own mesh formats.** See [here](https://github.com/duxingyi-charles/lifting_simplices_to_find_injectivity#input_file) for the instructions. 
  
 ### solver_options_file
 
