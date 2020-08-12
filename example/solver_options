@@ -5,21 +5,21 @@ alphaRatio
 alpha
 -1
 ftol_abs
--1
+1.e-8
 ftol_rel
--1
+1.e-8
 xtol_abs
--1
+1.e-8
 xtol_rel
--1
+1.e-8
 gtol_abs
--1
+1.e-8
 algorithm
 Projected_Newton
 maxeval
-300
+10000
 stopCode
-none
+all_good
 record
 vert 			0
 energy 			1
