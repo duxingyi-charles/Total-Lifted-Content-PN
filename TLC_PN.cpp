@@ -143,7 +143,7 @@ public:
     SolverOptionManager() :
             form("Tutte"), alphaRatio(1e-6), alpha(-1),
             ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
-            maxeval(1000), algorithm("ProjectedNewton"), stopCode("all_good"),
+            maxeval(10000), algorithm("ProjectedNewton"), stopCode("all_good"),
             /*record()*/ record_vert(false), record_energy(false), record_minArea(false),
             record_gradient(false), record_gradientNorm(false), record_searchDirection(false),
             record_searchNorm(false), record_stepSize(false), record_stepNorm(false),
@@ -153,7 +153,7 @@ public:
     SolverOptionManager(const char *option_filename, const char *result_filename) :
             form("Tutte"), alphaRatio(1e-6), alpha(-1),
             ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
-            maxeval(1000), algorithm("ProjectedNewton"), stopCode("all_good"),
+            maxeval(10000), algorithm("ProjectedNewton"), stopCode("all_good"),
             /*record()*/ record_vert(false), record_energy(false), record_minArea(false),
             record_gradient(false), record_gradientNorm(false), record_searchDirection(false),
             record_searchNorm(false), record_stepSize(false), record_stepNorm(false),
