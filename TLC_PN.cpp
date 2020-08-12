@@ -141,7 +141,7 @@ class SolverOptionManager {
 public:
     //default options
     SolverOptionManager() :
-            form("Tutte"), alphaRatio(1e-6), alpha(1e-6),
+            form("Tutte"), alphaRatio(1e-6), alpha(-1),
             ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
             maxeval(1000), algorithm("ProjectedNewton"), stopCode("all_good"),
             /*record()*/ record_vert(false), record_energy(false), record_minArea(false),
@@ -151,7 +151,7 @@ public:
 
     //import options from file
     SolverOptionManager(const char *option_filename, const char *result_filename) :
-            form("Tutte"), alphaRatio(1e-6), alpha(1e-6),
+            form("Tutte"), alphaRatio(1e-6), alpha(-1),
             ftol_abs(1e-8), ftol_rel(1e-8), xtol_abs(1e-8), xtol_rel(1e-8), gtol_abs(1e-8),
             maxeval(1000), algorithm("ProjectedNewton"), stopCode("all_good"),
             /*record()*/ record_vert(false), record_energy(false), record_minArea(false),
